@@ -26,6 +26,7 @@ namespace Model
                 this.Width = width;
                 this.cubes = cubeset;
             }
+
         }
 
         /// <summary>

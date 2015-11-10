@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Veiw.Properties
+namespace View.Properties
 {
 
 

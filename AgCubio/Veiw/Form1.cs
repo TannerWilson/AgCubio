@@ -7,14 +7,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-
-namespace Veiw
+using Network_Controller;
+namespace View
 {
     public partial class Form1 : Form
     {
         public Form1()
         {
+       
             InitializeComponent();
+            Delegate FuckIt = null;
+
+            Network.Connect_to_Server(FuckIt, "localhost");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Veiw
+﻿namespace View
 {
     partial class Form1
     {
