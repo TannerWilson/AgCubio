@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Net.Sockets;
+using System.Net;
 using Network_Controller;
 namespace View
 {
@@ -17,8 +19,11 @@ namespace View
        
             InitializeComponent();
             Delegate FuckIt = null;
+            Socket TheSocket = Network.Connect_to_Server(FuckIt, "127.0.0.1");
 
-            Network.Connect_to_Server(FuckIt, "localhost");
+            Network.Send(TheSocket, "Hiphop\n");
+
+            
         }
     }
 }

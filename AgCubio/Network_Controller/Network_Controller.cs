@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net;
+using System.Diagnostics;
 
 namespace Network_Controller
 {
@@ -16,11 +17,13 @@ namespace Network_Controller
     {
         public Socket TheSocket;
         public readonly int MAXBUFFERSIZE = 1024;
-        public byte[] Buffer;
+        public byte[] Buffer = new byte[1024];
+        public StringBuilder sb;
 
         public PreservedState(Socket NewSocket)
         {
             TheSocket = NewSocket;
+            sb = new StringBuilder();
         }
 
         
@@ -29,6 +32,7 @@ namespace Network_Controller
 
     public static class Network
     {
+        private static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
 
         /// <summary>
         /// This function attempts to connect to the server via a provided hostname. 
@@ -41,12 +45,12 @@ namespace Network_Controller
             Socket socket = null;
             try
             {
-                IPAddress host = IPAddress.Parse("127.0.0.1");
+                IPAddress host = IPAddress.Parse(hostname);
                 IPEndPoint hostep = new IPEndPoint(host, 11000);
                 socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
                 PreservedState NewPreserved = new PreservedState(socket);
-                socket.BeginConnect(hostname, 11000, Connected_to_Server, NewPreserved);
+                socket.BeginConnect(hostname, 11000, new AsyncCallback(Connected_to_Server), NewPreserved);
             }
             catch(Exception e)
             {
@@ -64,13 +68,10 @@ namespace Network_Controller
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
         {
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            Socket socket = TheState.TheSocket;
-         
 
-            Socket NewSocket =  socket.EndAccept(state_in_an_ar_object);
-            SocketError Error;
-            
-            socket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, out Error, ReceiveCallback, TheState);
+            TheState.TheSocket.EndConnect(state_in_an_ar_object);
+
+            TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
         }
 
         /// <summary>
@@ -81,6 +82,17 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
+            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+
+            int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
+
+            string bufferToString = encoding.GetString(TheState.Buffer);
+
+            if(bufferToString.Contains("\n"))
+            {
+                Debug.WriteLine(bufferToString);
+            }
+
 
         }
 
@@ -101,7 +113,10 @@ namespace Network_Controller
         /// <param name="data"></param>
         public static void Send(Socket socket, String data)
         {
+            byte[] byteData = encoding.GetBytes(data);
 
+            // Begin sending the data to the remote device.
+            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
         }
 
         /// <summary>
@@ -109,9 +124,22 @@ namespace Network_Controller
         /// then life is good and nothing needs to be done. If there is more data to send, 
         /// the SendCallBack needs to arrange to send this data.
         /// </summary>
-        public static void SendCallBack()
+        public static void SendCallBack(IAsyncResult ar)
         {
+            try
+            {
+                // Retrieve the socket from the state object.
+                Socket client = (Socket)ar.AsyncState;
 
+                // Complete sending the data to the remote device.
+                int bytesSent = client.EndSend(ar);
+                Console.WriteLine("Sent {0} bytes to server.", bytesSent);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
         }
     }
 }
