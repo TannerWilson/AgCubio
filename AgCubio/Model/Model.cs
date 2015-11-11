@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+
 
 namespace Model
 {
@@ -27,6 +29,25 @@ namespace Model
                 this.cubes = cubeset;
             }
 
+            /// <summary>
+            /// Takes an input string, splits it at the '\n' character and 
+            /// then creats cube objects based on the split strings.
+            /// </summary>
+            public HashSet<Cube> makeCubes(string input)
+            {
+                // Split on new line
+                string[] cubeStrings = input.Split('\n');
+                // Set to be returned
+                HashSet<Cube> cubes = new HashSet<Cube>(); 
+                // Loop over each cube string and parse them into cube objects
+                foreach (string cube in cubeStrings)
+                {
+                    Cube adding = JsonConvert.DeserializeObject<Cube>(message);
+                    cubes.Add(adding);
+                }
+                return cubes;
+            }
+
         }
 
         /// <summary>
@@ -34,23 +55,33 @@ namespace Model
         /// </summary>
         public class Cube
         {
+            [JsonObject(MemberSerialization.OptIn)]
+
             // Unique ID for cube
+            [JsonProperty]
             private string UID;
             // Name of the cube
+            [JsonProperty]
             private string Name;
             // Color of the cube
+            [JsonProperty]
             private ConsoleColor Color;
             // Mass of the cube
+            [JsonProperty]
             private double Mass;
             // If cube is food or not
+            [JsonProperty]
             private bool FoodStatus;
             // Cubes X and Y positions in space
+            [JsonProperty]
             private int X;
+            [JsonProperty]
             private int Y;
 
             /// <summary>
             /// Constructor used to initialize each member variable
             /// </summary>
+            [JsonConstructor]
             public Cube(String id, string name, ConsoleColor color, double mass, bool status, int x, int y)
             {
                 UID = id;
