@@ -15,9 +15,24 @@ namespace Network_Controller
     /// </summary>
     public class PreservedState
     {
+        /// <summary>
+        /// Socket used by the state object
+        /// </summary>
         public Socket TheSocket;
+
+        /// <summary>
+        /// Maximum buffer size
+        /// </summary>
         public readonly int MAXBUFFERSIZE = 1024;
+
+        /// <summary>
+        /// Buffer array used in socket
+        /// </summary>
         public byte[] Buffer = new byte[1024];
+
+        /// <summary>
+        /// String builder used for socked building
+        /// </summary>
         public StringBuilder sb;
 
         public PreservedState(Socket NewSocket)
@@ -25,9 +40,7 @@ namespace Network_Controller
             TheSocket = NewSocket;
             sb = new StringBuilder();
         }
-
-        
-        
+               
     }
 
     public static class Network
@@ -43,6 +56,7 @@ namespace Network_Controller
         public static Socket Connect_to_Server(Delegate callback, string hostname)
         {
             Socket socket = null;
+            // Attempt to establish a socket connection
             try
             {
                 IPAddress host = IPAddress.Parse(hostname);
@@ -52,12 +66,10 @@ namespace Network_Controller
                 PreservedState NewPreserved = new PreservedState(socket);
                 socket.BeginConnect(hostname, 11000, new AsyncCallback(Connected_to_Server), NewPreserved);
             }
-            catch(Exception e)
+            catch(Exception e) // Catch errors
             {
 
-            }
-            
-
+            }           
             return socket;
         }
 
@@ -67,10 +79,11 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
         {
+            // Grab state object from param
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-
+            // End the connection
             TheState.TheSocket.EndConnect(state_in_an_ar_object);
-
+            // Start receiving state
             TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
         }
 
@@ -82,10 +95,11 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
+            // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-
+            // Get number of bytes recieved and end teh receive
             int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
-
+            // Get the buffer returned from the server
             string bufferToString = encoding.GetString(TheState.Buffer);
 
             if(bufferToString.Contains("\n"))
