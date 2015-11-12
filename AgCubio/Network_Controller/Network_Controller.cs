@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
+using Model;
 
 namespace Network_Controller
 {
@@ -35,16 +36,30 @@ namespace Network_Controller
         /// </summary>
         public StringBuilder sb;
 
-        public PreservedState(Socket NewSocket)
+        /// <summary>
+        /// Stores what function to call when a connection is made
+        /// </summary>
+        public Delegate Callback;
+
+        /// <summary>
+        /// Constructs a state object
+        /// </summary>
+        public PreservedState(Socket NewSocket, Delegate Receive)
         {
             TheSocket = NewSocket;
             sb = new StringBuilder();
+
+            Callback = Receive;
         }
-               
+
     }
 
+    /// <summary>
+    /// Generic class used to establish socket connections to a server
+    /// </summary>
     public static class Network
     {
+        // Encoding used in networking
         private static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
 
         /// <summary>
@@ -57,19 +72,16 @@ namespace Network_Controller
         {
             Socket socket = null;
             // Attempt to establish a socket connection
-            try
-            {
-                IPAddress host = IPAddress.Parse(hostname);
-                IPEndPoint hostep = new IPEndPoint(host, 11000);
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-                PreservedState NewPreserved = new PreservedState(socket);
-                socket.BeginConnect(hostname, 11000, new AsyncCallback(Connected_to_Server), NewPreserved);
-            }
-            catch(Exception e) // Catch errors
-            {
+            IPAddress host = IPAddress.Parse(hostname);
+            IPEndPoint hostep = new IPEndPoint(host, 11000);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-            }           
+            PreservedState NewPreserved = new PreservedState(socket, callback);
+
+            socket.BeginConnect(hostname, 11000, new AsyncCallback(Connected_to_Server), NewPreserved);
+
+
             return socket;
         }
 
@@ -79,12 +91,21 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
         {
-            // Grab state object from param
-            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            // End the connection
-            TheState.TheSocket.EndConnect(state_in_an_ar_object);
-            // Start receiving state
-            TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
+            try
+            {
+                // Grab state object from param
+                PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+                // End the connection
+                TheState.TheSocket.EndConnect(state_in_an_ar_object);
+
+                TheState.Callback.DynamicInvoke("Connected");
+                // Start receiving state
+                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
+            }
+            catch(Exception e)
+            {
+                
+            }
         }
 
         /// <summary>
@@ -97,16 +118,12 @@ namespace Network_Controller
         {
             // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            // Get number of bytes recieved and end teh receive
+            // Get number of bytes recieved and end the receive
             int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
             // Get the buffer returned from the server
             string bufferToString = encoding.GetString(TheState.Buffer);
 
-            if(bufferToString.Contains("\n"))
-            {
-                Debug.WriteLine(bufferToString);
-            }
-
+            TheState.Callback.DynamicInvoke(bufferToString);
 
         }
 
@@ -116,7 +133,7 @@ namespace Network_Controller
         /// </summary>
         public static void i_want_more_data(PreservedState state)
         {
-
+            state.TheSocket.BeginReceive(state.Buffer, 0, state.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), state);
         }
 
         /// <summary>

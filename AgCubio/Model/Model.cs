@@ -4,135 +4,167 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-
+using System.Diagnostics;
 
 namespace Model
 {
-    public class Model
+
+    /// <summary>
+    /// Class to represent the world object 
+    /// </summary>
+    public class World
     {
-        public class World
+        // Height and width of the world view screen
+        private readonly int Height;
+        private readonly int Width;
+
+        
+        private string Part;
+        // Set of cubes in the world
+        private HashSet<Cube> WorldCubes;
+
+        /// <summary>
+        /// Constructs a new world object given a height width and collection of cubes
+        /// </summary>
+        public World(int height, int width, HashSet<Cube> cubeset)
         {
-            // Height and width of the world view screen
-            private readonly int Height;
-            private readonly int Width;
+            this.Height = height;
+            this.Width = width;
+            this.WorldCubes = cubeset;
+        }
 
-            // Set of cubes in the world
-            private HashSet<Cube> cubes;
 
-            /// <summary>
-            /// Constructs a new world object given a height width and collection of cubes
-            /// </summary>
-            public World(int height, int width, HashSet<Cube> cubeset)
+        /// <summary>
+        /// Takes an input string, splits it at the '\n' character and 
+        /// then creats cube objects based on the split strings.
+        /// </summary>
+        public void makeCube(string input)
+        {
+            // Split input buffer at new lines
+            string[] SplitString = input.Split('\n');
+            Debug.WriteLine(WorldCubes.Count);
+            foreach (string Item in SplitString)
             {
-                this.Height = height;
-                this.Width = width;
-                this.cubes = cubeset;
-            }
+                bool Changed = false; // Used to 
+                string FinalString = null; // Used to append broken data
 
-            /// <summary>
-            /// Takes an input string, splits it at the '\n' character and 
-            /// then creats cube objects based on the split strings.
-            /// </summary>
-            public HashSet<Cube> makeCubes(string input)
-            {
-                // Split on new line
-                string[] cubeStrings = input.Split('\n');
-                // Set to be returned
-                HashSet<Cube> cubes = new HashSet<Cube>(); 
-                // Loop over each cube string and parse them into cube objects
-                foreach (string cube in cubeStrings)
+                // Ensure no error strings are accepted
+                if (!Item.StartsWith("\0\0") && Item != string.Empty)
                 {
-                    Cube adding = JsonConvert.DeserializeObject<Cube>(message);
-                    cubes.Add(adding);
+                    // Broken item at first index (no valid start)
+                    if (!Item.StartsWith("{"))
+                    {
+                        // append this item to the broken string from last iteration
+                        FinalString = Part + Item;
+                        Changed = true;
+                    }
+                    // Broken item and last index (no valid ending)
+                    if (!Item.EndsWith("}"))
+                    {
+                        // Save string to be appended next iteration
+                        Part = Item;
+                    }
+                    else // Complete valid item
+                    {
+                        FinalString = Item;
+                    }
+                    // Add cube to set
+                    Cube adding;
+                    if (FinalString != null && Changed == false)
+                    {
+                        adding = JsonConvert.DeserializeObject<Cube>(FinalString);
+                        // Ensure we only add actual cubes
+                        if(adding != null)
+                            WorldCubes.Add(adding);
+                    }
                 }
-                return cubes;
             }
+        }
 
+    }
+
+    /// <summary>
+    ///  Helper class to "world" used to store all information associated with a given cube
+    /// </summary>
+    [JsonObject(MemberSerialization.OptIn)]
+    public class Cube
+    {
+        // Unique ID for cube
+        [JsonProperty]
+        private string UID;
+        // Name of the cube
+        [JsonProperty]
+        private string Name;
+        // Color of the cube
+        [JsonProperty]
+        private ConsoleColor Color;
+        // Mass of the cube
+        [JsonProperty]
+        private double Mass;
+        // If cube is food or not
+        [JsonProperty]
+        private bool FoodStatus;
+        // Cubes X and Y positions in space
+        [JsonProperty]
+        private double X;
+        [JsonProperty]
+        private double Y;
+
+        /// <summary>
+        /// Constructor used to initialize each member variable
+        /// </summary>
+        [JsonConstructor]
+        public Cube(String uid, string name, ConsoleColor color, double mass, bool food, double loc_x, double loc_y)
+        {
+            UID = uid;
+            this.Name = name;
+            this.Color = color;
+            this.Mass = mass;
+            FoodStatus = food;
+            this.X = loc_x;
+            this.Y = loc_y;
         }
 
         /// <summary>
-        ///  Helper class to "world" used to store all information associated with a given cube
+        /// Returns the cube's width
         /// </summary>
-        public class Cube
+        public double getWidth()
         {
-            [JsonObject(MemberSerialization.OptIn)]
+            // Return square root of the mass
+            return Math.Sqrt(Mass);
+        }
 
-            // Unique ID for cube
-            [JsonProperty]
-            private string UID;
-            // Name of the cube
-            [JsonProperty]
-            private string Name;
-            // Color of the cube
-            [JsonProperty]
-            private ConsoleColor Color;
-            // Mass of the cube
-            [JsonProperty]
-            private double Mass;
-            // If cube is food or not
-            [JsonProperty]
-            private bool FoodStatus;
-            // Cubes X and Y positions in space
-            [JsonProperty]
-            private int X;
-            [JsonProperty]
-            private int Y;
+        /// <summary>
+        /// Returns the Y position of the top of the cube
+        /// </summary>
+        public double Top()
+        {
+            return Y - (double)this.getWidth();
+        }
 
-            /// <summary>
-            /// Constructor used to initialize each member variable
-            /// </summary>
-            [JsonConstructor]
-            public Cube(String id, string name, ConsoleColor color, double mass, bool status, int x, int y)
-            {
-                UID = id;
-                this.Name = name;
-                this.Color = color;
-                this.Mass = mass;
-                FoodStatus = status;
-                this.X = x;
-                this.Y = y;
-            }
+        /// <summary>
+        /// Returns the X position of the right edge of the cube
+        /// </summary>
+        public double Right()
+        {
+            return X + (double)this.getWidth();
+        }
 
-            /// <summary>
-            /// Returns the cube's width
-            /// </summary>
-            public double getWidth()
-            {
-                // Return square root of the mass
-                return Math.Sqrt(Mass);
-            }
+        /// <summary>
+        /// Returns the X position of the left edge of the cube
+        /// </summary>
+        public double Left()
+        {
+            return X - (double)this.getWidth();
+        }
 
-            /// <summary>
-            /// Returns the Y position of the top of the cube
-            /// </summary>
-            public int Top()
-            {
-                return Y - (int)this.getWidth();
-            }
-
-            /// <summary>
-            /// Returns the X position of the right edge of the cube
-            /// </summary>
-            public int Right()
-            {
-                return X + (int)this.getWidth();
-            }
-
-            /// <summary>
-            /// Returns the X position of the left edge of the cube
-            /// </summary>
-            public int Left()
-            {
-                return X - (int)this.getWidth();
-            }
-
-            /// <summary>
-            /// Returns the Y position of the bottom edge of the cube
-            /// </summary>
-            public int Bottom()
-            {
-                return Y + (int)this.getWidth();
-            }
+        /// <summary>
+        /// Returns the Y position of the bottom edge of the cube
+        /// </summary>
+        public double Bottom()
+        {
+            return Y + (double)this.getWidth();
         }
     }
 }
+
