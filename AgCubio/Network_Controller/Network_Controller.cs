@@ -72,7 +72,6 @@ namespace Network_Controller
         {
             Socket socket = null;
             // Attempt to establish a socket connection
-
             IPAddress host = IPAddress.Parse(hostname);
             IPEndPoint hostep = new IPEndPoint(host, 11000);
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

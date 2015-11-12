@@ -20,44 +20,109 @@ namespace View
         World TheWorld;
 
         Network_Controller.PreservedState TheState;
-        
+
+        // Brush used to draw
+        private System.Drawing.SolidBrush myBrush;
+
+        private int GameState = 0;
+
+        private int count;
+
         /// <summary>
         /// Creates new AgCubio game and form
         /// </summary>
         public AdCubioForm()
         {
-            // Make new world
-            TheWorld = new World(1000, 1000, new HashSet<Cube>());
             InitializeComponent();
-            // Delagate called when connection is made
-            ReceiveDelegate ReceiveCallBack = new ReceiveDelegate(Receive);
-            try
-            {
-                Socket NewSocket = Network.Connect_to_Server(ReceiveCallBack, "127.0.0.1");
-                TheState = new Network_Controller.PreservedState(NewSocket, ReceiveCallBack);
-            }
-            catch(Exception e)
-            {
-                MessageBox.Show("Unable to connect to server.\n" + e.Message);
-                Close();
-            }
-
-
+            DoubleBuffered = true;
+            
         }
 
         void Receive(string Buffer)
         {
-            
+            // Initial receive
             if (Buffer == "Connected")
             {
-                Network.Send(TheState.TheSocket, "Hiphop\n");
+                // Send player name
+                Network.Send(TheState.TheSocket, NameTextBox.Text);
+                
             }
-            else
-            {
+            else // Receive data
+            {              
                 TheWorld.makeCube(Buffer);
                 Network.i_want_more_data(TheState);
             }
         }
 
+        void StartConnect()
+        {
+            // Make new world
+            TheWorld = new World(1000, 1000);
+
+            // Delagate called when connection is made
+            ReceiveDelegate ReceiveCallBack = new ReceiveDelegate(Receive);
+            try
+            {
+                Socket NewSocket = Network.Connect_to_Server(ReceiveCallBack, ServerTextBox.Text);
+                TheState = new Network_Controller.PreservedState(NewSocket, ReceiveCallBack);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Unable to connect to server.\n" + e.Message);
+                Close();
+            }
+            LogInPanel.Visible = false;
+            GameState = 1;
+        }
+
+        /// <summary>
+        /// Key event in server text box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ServerTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                StartConnect();
+            }
+        }
+
+        /// <summary>
+        /// Key event in Player name text box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void NameTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                StartConnect();
+            }
+        }
+
+        /// <summary>
+        /// Called to draw background
+        /// </summary>
+        private void AdCubioForm_Paint(object sender, PaintEventArgs e)
+        {
+            if (GameState == 1)
+            {
+
+                if (TheWorld.PlayerCubes != null)
+                {
+                    // Get player's cube
+                    
+
+                    int width = (int)TheWorld.PlayerCubes.getWidth();
+
+                    Color color = Color.FromArgb(0, 0, 0);
+                    myBrush = new System.Drawing.SolidBrush(color);
+                    // Draw player cube
+                    e.Graphics.FillRectangle(myBrush, new Rectangle((int)TheWorld.PlayerCubes.X/4, (int)TheWorld.PlayerCubes.Y/4, Width/7, Width/7));
+                }
+                Invalidate();
+            }
+        }
     }
 }

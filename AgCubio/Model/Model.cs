@@ -17,20 +17,28 @@ namespace Model
         // Height and width of the world view screen
         private readonly int Height;
         private readonly int Width;
+        private Object MakeCubeLock = new Object();
 
-        
         private string Part;
-        // Set of cubes in the world
-        private HashSet<Cube> WorldCubes;
+
+        // All cubes in the world object
+        private Dictionary<string, Cube> DictionaryOfCubes;
+
+        // Stored all cubes controlled by the player
+        public Cube PlayerCubes;
+
+        private bool FirstPlayer;
 
         /// <summary>
         /// Constructs a new world object given a height width and collection of cubes
         /// </summary>
-        public World(int height, int width, HashSet<Cube> cubeset)
+        public World(int height, int width)
         {
             this.Height = height;
             this.Width = width;
-            this.WorldCubes = cubeset;
+            this.DictionaryOfCubes = new Dictionary<string, Cube>();
+            
+            FirstPlayer = true;
         }
 
 
@@ -40,46 +48,86 @@ namespace Model
         /// </summary>
         public void makeCube(string input)
         {
-            // Split input buffer at new lines
-            string[] SplitString = input.Split('\n');
-            Debug.WriteLine(WorldCubes.Count);
-            foreach (string Item in SplitString)
-            {
-                bool Changed = false; // Used to 
-                string FinalString = null; // Used to append broken data
 
-                // Ensure no error strings are accepted
-                if (!Item.StartsWith("\0\0") && Item != string.Empty)
+            // Lock for thread safety
+            lock (MakeCubeLock)
+            {
+
+                // Split input buffer at new lines
+                string[] SplitString = input.Split('\n');
+                foreach (string Item in SplitString)
                 {
-                    // Broken item at first index (no valid start)
-                    if (!Item.StartsWith("{"))
+                    bool Changed = false; // Used to 
+                    string FinalString = null; // Used to append broken data
+
+                    // Ensure no error strings are accepted
+                    if (!Item.StartsWith("\0\0") && Item != string.Empty)
                     {
-                        // append this item to the broken string from last iteration
-                        FinalString = Part + Item;
-                        Changed = true;
-                    }
-                    // Broken item and last index (no valid ending)
-                    if (!Item.EndsWith("}"))
-                    {
-                        // Save string to be appended next iteration
-                        Part = Item;
-                    }
-                    else // Complete valid item
-                    {
-                        FinalString = Item;
-                    }
-                    // Add cube to set
-                    Cube adding;
-                    if (FinalString != null && Changed == false)
-                    {
-                        adding = JsonConvert.DeserializeObject<Cube>(FinalString);
-                        // Ensure we only add actual cubes
-                        if(adding != null)
-                            WorldCubes.Add(adding);
+                        // Broken item at first index (no valid start)
+                        if (!Item.StartsWith("{"))
+                        {
+                            // append this item to the broken string from last iteration
+                            FinalString = Part + Item;
+                            Changed = true;
+                        }
+                        // Broken item and last index (no valid ending)
+                        if (!Item.EndsWith("}"))
+                            // Save string to be appended next iteration
+                            Part = Item;
+                        else // Complete valid item
+                            FinalString = Item;
+
+                        // Add cube to set
+                        Cube adding;
+                        if (FinalString != null && Changed == false)
+                        {
+                            adding = JsonConvert.DeserializeObject<Cube>(FinalString);
+
+                            // Ensure we only add actual cubes
+                            if (adding != null)
+                            {
+                                // Add first entry to player dictionary
+                                if (FirstPlayer)
+                                {
+                                    PlayerCubes = adding;
+                                    FirstPlayer = false;
+                                }
+
+                                UpdateCube(adding);
+                            }
+                        }
+
                     }
                 }
             }
+
         }
+
+
+        /// <summary>
+        /// Updates values or adds cubes to DictionaryOfCubes
+        /// </summary>
+        /// <param name="NewCube"></param>
+        void UpdateCube(Cube NewCube)
+        {
+            // Check if cube is in DictionaryOfCubes.
+            if (!DictionaryOfCubes.ContainsKey(NewCube.GetUID()))
+                DictionaryOfCubes.Add(NewCube.GetUID(), NewCube);
+            else
+            {
+                Cube NewCubeValue;
+                //Update values
+                if (DictionaryOfCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
+                {
+                    // Update Mass
+                    if (NewCubeValue.GetMass() == 0) // Delete if cube has 0 mass.
+                        DictionaryOfCubes.Remove(NewCube.GetUID());
+                    else
+                        NewCubeValue.Mass = NewCube.Mass;
+                }
+            }
+        }
+
 
     }
 
@@ -97,24 +145,30 @@ namespace Model
         private string Name;
         // Color of the cube
         [JsonProperty]
-        private ConsoleColor Color;
+        private int Color;
         // Mass of the cube
         [JsonProperty]
-        private double Mass;
+        public double Mass;
+
+        //public double Hours
+        //{
+        //    get { return seconds / 3600; }
+        //    set { seconds = value * 3600; }
+        //}
         // If cube is food or not
         [JsonProperty]
         private bool FoodStatus;
         // Cubes X and Y positions in space
         [JsonProperty]
-        private double X;
+        public double X;
         [JsonProperty]
-        private double Y;
+        public double Y;
 
         /// <summary>
         /// Constructor used to initialize each member variable
         /// </summary>
         [JsonConstructor]
-        public Cube(String uid, string name, ConsoleColor color, double mass, bool food, double loc_x, double loc_y)
+        public Cube(String uid, string name, int color, double mass, bool food, double loc_x, double loc_y)
         {
             UID = uid;
             this.Name = name;
@@ -134,6 +188,15 @@ namespace Model
             return Math.Sqrt(Mass);
         }
 
+        public string GetUID()
+        {
+            return UID;
+        }
+
+        public double GetMass()
+        {
+            return Mass;
+        }
         /// <summary>
         /// Returns the Y position of the top of the cube
         /// </summary>
