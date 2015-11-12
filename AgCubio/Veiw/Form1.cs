@@ -116,23 +116,25 @@ namespace View
 
                     int width = (int)TheWorld.PlayerCubes.getWidth();
 
-                    Color color = Color.FromArgb(0, 0, 0);
-                    myBrush = new System.Drawing.SolidBrush(color);
+                    Color PlayerColor = Color.FromArgb(0, 0, 0);
+                    myBrush = new System.Drawing.SolidBrush(PlayerColor);
                     // Draw player cube
                     e.Graphics.FillRectangle(myBrush, new Rectangle((int)TheWorld.PlayerCubes.X/4, (int)TheWorld.PlayerCubes.Y/4, Width/7, Width/7));
+                    
+                    // Draw all other cubes
+                    foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
+                    {
+                        // Get and set color
+                        Color color = Color.FromArgb(cube.Color);
+                        myBrush = new System.Drawing.SolidBrush(color);
+                        // Draw cube
+                        e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
+                    }
                 }
                 Invalidate();
 
                 
-                // Draw all other cubes
-                foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
-                {       
-                    // Get and set color
-                    Color color = Color.FromArgb(cube.Color);
-                    myBrush = new System.Drawing.SolidBrush(color);
-                    // Draw cube
-                    e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
-                }
+                
             }
             
         }
