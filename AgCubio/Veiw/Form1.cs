@@ -125,15 +125,13 @@ namespace View
 
                 
                 // Draw all other cubes
-                foreach (KeyValuePair<string, Cube> item in TheWorld.DictionaryOfCubes)
-                {
-                    Cube cube = item.Value;
+                foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
+                {       
                     // Get and set color
                     Color color = Color.FromArgb(cube.Color);
                     myBrush = new System.Drawing.SolidBrush(color);
                     // Draw cube
                     e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
-
                 }
             }
             
