@@ -109,7 +109,7 @@ namespace View
             if (GameState == 1)
             {
 
-                if (TheWorld.PlayerCubes != null)
+                if (TheWorld.PlayerCubes != null && TheWorld.DictionaryOfCubes.Count !=0)
                 {
                     // Get player's cube
                     
@@ -122,7 +122,21 @@ namespace View
                     e.Graphics.FillRectangle(myBrush, new Rectangle((int)TheWorld.PlayerCubes.X/4, (int)TheWorld.PlayerCubes.Y/4, Width/7, Width/7));
                 }
                 Invalidate();
+
+                
+                // Draw all other cubes
+                foreach (KeyValuePair<string, Cube> item in TheWorld.DictionaryOfCubes)
+                {
+                    Cube cube = item.Value;
+                    // Get and set color
+                    Color color = Color.FromArgb(cube.Color);
+                    myBrush = new System.Drawing.SolidBrush(color);
+                    // Draw cube
+                    e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
+
+                }
             }
+            
         }
     }
 }

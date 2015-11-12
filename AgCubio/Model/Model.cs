@@ -22,7 +22,7 @@ namespace Model
         private string Part;
 
         // All cubes in the world object
-        private Dictionary<string, Cube> DictionaryOfCubes;
+        public Dictionary<string, Cube> DictionaryOfCubes;
 
         // Stored all cubes controlled by the player
         public Cube PlayerCubes;
@@ -145,7 +145,7 @@ namespace Model
         private string Name;
         // Color of the cube
         [JsonProperty]
-        private int Color;
+        public int Color;
         // Mass of the cube
         [JsonProperty]
         public double Mass;
