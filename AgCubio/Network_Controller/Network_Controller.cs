@@ -71,14 +71,20 @@ namespace Network_Controller
         public static Socket Connect_to_Server(Delegate callback, string hostname)
         {
             Socket socket = null;
-            // Attempt to establish a socket connection
-            IPAddress host = IPAddress.Parse(hostname);
-            IPEndPoint hostep = new IPEndPoint(host, 11000);
+
+            IPHostEntry ipHostInfo = Dns.Resolve(hostname);
+            IPAddress ipAddress = ipHostInfo.AddressList[0];
+
+
+            IPEndPoint hostep = new IPEndPoint(ipAddress, 11000);
+
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             PreservedState NewPreserved = new PreservedState(socket, callback);
 
-            socket.BeginConnect(hostname, 11000, new AsyncCallback(Connected_to_Server), NewPreserved);
+            socket.BeginConnect(hostep, new AsyncCallback(Connected_to_Server), NewPreserved);
+
+
 
 
             return socket;
@@ -90,8 +96,7 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
         {
-            try
-            {
+            
                 // Grab state object from param
                 PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
                 // End the connection
@@ -100,11 +105,8 @@ namespace Network_Controller
                 TheState.Callback.DynamicInvoke("Connected");
                 // Start receiving state
                 TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
-            }
-            catch(Exception e)
-            {
-                
-            }
+            
+            
         }
 
         /// <summary>

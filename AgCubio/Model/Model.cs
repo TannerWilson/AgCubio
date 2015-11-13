@@ -52,7 +52,7 @@ namespace Model
             // Lock for thread safety
             lock (MakeCubeLock)
             {
-
+                
                 // Split input buffer at new lines
                 string[] SplitString = input.Split('\n');
                 foreach (string Item in SplitString)
@@ -92,16 +92,22 @@ namespace Model
                                     PlayerCubes = adding;
                                     FirstPlayer = false;
                                 }
+                                else
+                                {
+                                    UpdateCube(adding);
+                                }
 
-                                UpdateCube(adding);
+                                
                             }
                         }
 
                     }
                 }
+
             }
 
         }
+
 
 
         /// <summary>

@@ -43,6 +43,12 @@ namespace View
             // Initial receive
             if (Buffer == "Connected")
             {
+
+                this.Invoke(new MethodInvoker(delegate {
+                    LogInPanel.Visible = false;
+                    GameState = 1;
+                }));
+                
                 // Send player name
                 Network.Send(TheState.TheSocket, NameTextBox.Text);
                 
@@ -69,10 +75,9 @@ namespace View
             catch (Exception e)
             {
                 MessageBox.Show("Unable to connect to server.\n" + e.Message);
-                Close();
+                //Close();
             }
-            LogInPanel.Visible = false;
-            GameState = 1;
+            
         }
 
         /// <summary>
@@ -120,16 +125,17 @@ namespace View
                     myBrush = new System.Drawing.SolidBrush(PlayerColor);
                     // Draw player cube
                     e.Graphics.FillRectangle(myBrush, new Rectangle((int)TheWorld.PlayerCubes.X/4, (int)TheWorld.PlayerCubes.Y/4, Width/7, Width/7));
-                    
+
+                    List<Cube> V = TheWorld.GetValues();
                     // Draw all other cubes
-                    foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
-                    {
-                        // Get and set color
-                        Color color = Color.FromArgb(cube.Color);
-                        myBrush = new System.Drawing.SolidBrush(color);
-                        // Draw cube
-                        e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
-                    }
+                    //foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
+                    //{
+                    //    // Get and set color
+                    //    Color color = Color.FromArgb(cube.Color);
+                    //    myBrush = new System.Drawing.SolidBrush(color);
+                    //    // Draw cube
+                    //    e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
+                    //}
                 }
                 Invalidate();
 
