@@ -62,6 +62,8 @@ namespace Network_Controller
         // Encoding used in networking
         private static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
 
+        private static Object Lock = new Object();
+
         /// <summary>
         /// This function attempts to connect to the server via a provided hostname. 
         /// It saves the callback function (in a state object) for use when data arrives.
@@ -117,14 +119,17 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
-            // Get the state back from prameter
-            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            // Get number of bytes recieved and end the receive
-            int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
-            // Get the buffer returned from the server
-            string bufferToString = encoding.GetString(TheState.Buffer);
+            lock(Lock)
+            {
+                // Get the state back from prameter
+                PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+                // Get number of bytes recieved and end the receive
+                int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
+                // Get the buffer returned from the server
+                string bufferToString = encoding.GetString(TheState.Buffer);
 
-            TheState.Callback.DynamicInvoke(bufferToString);
+                TheState.Callback.DynamicInvoke(bufferToString);
+            }
 
         }
 
@@ -165,12 +170,12 @@ namespace Network_Controller
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to server.", bytesSent);
+               // Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
 
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.ToString());
+                throw e;
             }
         }
     }

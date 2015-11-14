@@ -90,6 +90,8 @@
             this.Name = "AdCubioForm";
             this.Text = "Form1";
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.AdCubioForm_Paint);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AdCubioForm_KeyDown);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.AdCubioForm_MouseMove);
             this.LogInPanel.ResumeLayout(false);
             this.LogInPanel.PerformLayout();
             this.ResumeLayout(false);

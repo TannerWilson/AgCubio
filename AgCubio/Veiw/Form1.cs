@@ -28,6 +28,14 @@ namespace View
 
         private int count;
 
+        int NumOfFrames = 0;
+        int LastTime;
+
+        int Mousex;
+        int Mousey;
+
+        private Object ReceiveLock = new Object();
+
         /// <summary>
         /// Creates new AgCubio game and form
         /// </summary>
@@ -35,28 +43,36 @@ namespace View
         {
             InitializeComponent();
             DoubleBuffered = true;
-            
+            LastTime = DateTime.Now.Second;
+
         }
 
         void Receive(string Buffer)
         {
-            // Initial receive
-            if (Buffer == "Connected")
+            lock (ReceiveLock)
             {
 
-                this.Invoke(new MethodInvoker(delegate {
-                    LogInPanel.Visible = false;
-                    GameState = 1;
-                }));
-                
-                // Send player name
-                Network.Send(TheState.TheSocket, NameTextBox.Text);
-                
-            }
-            else // Receive data
-            {              
-                TheWorld.makeCube(Buffer);
-                Network.i_want_more_data(TheState);
+                // Initial receive
+                if (Buffer == "Connected")
+                {
+
+
+                    // Send player name
+                    Network.Send(TheState.TheSocket, NameTextBox.Text);
+
+                    this.Invoke(new MethodInvoker(delegate
+                    {
+                        LogInPanel.Visible = false;
+                        GameState = 1;
+                    }));
+
+
+                }
+                else // Receive data
+                {
+                    TheWorld.makeCube(Buffer);
+                    Network.i_want_more_data(TheState);
+                }
             }
         }
 
@@ -77,7 +93,7 @@ namespace View
                 MessageBox.Show("Unable to connect to server.\n" + e.Message);
                 //Close();
             }
-            
+
         }
 
         /// <summary>
@@ -111,38 +127,97 @@ namespace View
         /// </summary>
         private void AdCubioForm_Paint(object sender, PaintEventArgs e)
         {
+
             if (GameState == 1)
             {
+                count++;
+                // sendRequest("move", Control.MousePosition.X, Control.MousePosition.Y);
 
-                if (TheWorld.PlayerCubes != null && TheWorld.DictionaryOfCubes.Count !=0)
+                if (TheWorld.PlayerCubes != null)
                 {
-                    // Get player's cube
                     
 
-                    int width = (int)TheWorld.PlayerCubes.getWidth();
-
-                    Color PlayerColor = Color.FromArgb(0, 0, 0);
-                    myBrush = new System.Drawing.SolidBrush(PlayerColor);
-                    // Draw player cube
-                    e.Graphics.FillRectangle(myBrush, new Rectangle((int)TheWorld.PlayerCubes.X/4, (int)TheWorld.PlayerCubes.Y/4, Width/7, Width/7));
-
-                    List<Cube> V = TheWorld.GetValues();
                     // Draw all other cubes
-                    //foreach (Cube cube in TheWorld.DictionaryOfCubes.Values)
-                    //{
-                    //    // Get and set color
-                    //    Color color = Color.FromArgb(cube.Color);
-                    //    myBrush = new System.Drawing.SolidBrush(color);
-                    //    // Draw cube
-                    //    e.Graphics.FillRectangle(myBrush, new Rectangle((int)cube.X, (int)cube.Y, (int)cube.getWidth(), (int)cube.getWidth()));
-                    //}
-                }
-                Invalidate();
+                    foreach (Cube cube in TheWorld.GetCubeValues())
+                    {
+                        
 
-                
-                
+                        Color color = Color.FromArgb(255, 0, 0, 1);
+                        myBrush = new System.Drawing.SolidBrush(Color.Blue);
+                        // Draw cube
+                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth() + 5, cube.getWidth() + 5);
+                    }
+                    foreach (Cube cube in TheWorld.GetPlayerCubes())
+                    {
+                        if (cube.Mass != 0)
+                        {
+                            Color color = Color.FromArgb(255, 0, 0, 1);
+                            myBrush = new System.Drawing.SolidBrush(Color.Black);
+                            // Draw cube
+                            float width = cube.getWidth();
+                            e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
+                            myBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Red);
+                        }
+                        e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y));
+
+                    }
+
+                }
+                // Get player's cube
+                sendRequest("move", Mousex, Mousey);
+                Invalidate();
+                CalcFrames();
+
             }
-            
+        }
+
+        void CalcFrames()
+        {
+            int NewTime = DateTime.Now.Second;
+            NumOfFrames++;
+            if (NewTime - LastTime > 1)
+            {
+                Debug.WriteLine("Frames: " + NumOfFrames);
+                NumOfFrames = 0;
+                LastTime = DateTime.Now.Second;
+            }
+        }
+
+        /// <summary>
+        /// Sends request to the server
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public void sendRequest(string request, int x, int y)
+        {
+
+            if (GameState == 1)
+            {
+                string message = "(" + request + ", " + x + "," + y + ")\n";
+                Network.Send(TheState.TheSocket, message);
+            }
+        }
+
+        /// <summary>
+        /// Mouse move event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void AdCubioForm_MouseMove(object sender, MouseEventArgs e)
+        {
+            Mousex = e.X;
+            Mousey = e.Y;
+
+        }
+
+        private void AdCubioForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                
+                sendRequest("split", Mousex, Mousey);
+            }
         }
     }
 }

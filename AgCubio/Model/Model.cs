@@ -25,9 +25,11 @@ namespace Model
         public Dictionary<string, Cube> DictionaryOfCubes;
 
         // Stored all cubes controlled by the player
-        public Cube PlayerCubes;
+        public Dictionary<string, Cube> PlayerCubes;
 
         private bool FirstPlayer;
+
+        private string PlayersName;
 
         /// <summary>
         /// Constructs a new world object given a height width and collection of cubes
@@ -37,7 +39,8 @@ namespace Model
             this.Height = height;
             this.Width = width;
             this.DictionaryOfCubes = new Dictionary<string, Cube>();
-            
+            this.PlayerCubes = new Dictionary<string, Cube>();
+
             FirstPlayer = true;
         }
 
@@ -89,23 +92,43 @@ namespace Model
                                 // Add first entry to player dictionary
                                 if (FirstPlayer)
                                 {
-                                    PlayerCubes = adding;
+                                    PlayerCubes.Add(adding.GetUID(), adding);
+                                    PlayersName = adding.Name;
+
                                     FirstPlayer = false;
                                 }
                                 else
                                 {
                                     UpdateCube(adding);
-                                }
-
-                                
+                                }   
                             }
                         }
-
                     }
                 }
-
             }
+        }
 
+        public IEnumerable<Cube> GetCubeValues()
+        {
+            // L
+            lock (MakeCubeLock)
+            {
+                foreach(Cube item in DictionaryOfCubes.Values)
+                {
+                    yield return item;
+                }
+            }
+        }
+
+        public IEnumerable<Cube> GetPlayerCubes()
+        {
+            lock (MakeCubeLock)
+            {
+                foreach (Cube item in PlayerCubes.Values)
+                {
+                    yield return item;
+                }
+            }
         }
 
 
@@ -117,8 +140,13 @@ namespace Model
         void UpdateCube(Cube NewCube)
         {
             // Check if cube is in DictionaryOfCubes.
-            if (!DictionaryOfCubes.ContainsKey(NewCube.GetUID()))
-                DictionaryOfCubes.Add(NewCube.GetUID(), NewCube);
+            if (!DictionaryOfCubes.ContainsKey(NewCube.GetUID()) && !PlayerCubes.ContainsKey(NewCube.GetUID()))
+            {
+                if(NewCube.Name != PlayersName)
+                    DictionaryOfCubes.Add(NewCube.GetUID(), NewCube);
+                else
+                    PlayerCubes.Add(NewCube.GetUID(), NewCube);
+            }
             else
             {
                 Cube NewCubeValue;
@@ -126,12 +154,30 @@ namespace Model
                 if (DictionaryOfCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
                 {
                     // Update Mass
-                    if (NewCubeValue.GetMass() == 0) // Delete if cube has 0 mass.
+                    if (NewCube.Mass == 0) // Delete if cube has 0 mass.
                         DictionaryOfCubes.Remove(NewCube.GetUID());
                     else
+                    {
                         NewCubeValue.Mass = NewCube.Mass;
+                        NewCubeValue.X = NewCube.X;
+                        NewCubeValue.Y = NewCube.Y;
+                    }
+                }
+
+                if(PlayerCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
+                {
+                    // Update Mass
+                    if (NewCube.Mass == 0) // Delete if cube has 0 mass.
+                        PlayerCubes.Remove(NewCube.GetUID());
+                    else
+                    {
+                        NewCubeValue.Mass = NewCube.Mass;
+                        NewCubeValue.X = NewCube.X;
+                        NewCubeValue.Y = NewCube.Y;
+                    }
                 }
             }
+
         }
 
 
@@ -148,33 +194,28 @@ namespace Model
         private string UID;
         // Name of the cube
         [JsonProperty]
-        private string Name;
+        public string Name;
         // Color of the cube
         [JsonProperty]
         public int Color;
         // Mass of the cube
         [JsonProperty]
-        public double Mass;
+        public float Mass;
 
-        //public double Hours
-        //{
-        //    get { return seconds / 3600; }
-        //    set { seconds = value * 3600; }
-        //}
         // If cube is food or not
         [JsonProperty]
         private bool FoodStatus;
         // Cubes X and Y positions in space
         [JsonProperty]
-        public double X;
+        public float X;
         [JsonProperty]
-        public double Y;
+        public float Y;
 
         /// <summary>
         /// Constructor used to initialize each member variable
         /// </summary>
         [JsonConstructor]
-        public Cube(String uid, string name, int color, double mass, bool food, double loc_x, double loc_y)
+        public Cube(String uid, string name, int color, float mass, bool food, float loc_x, float loc_y)
         {
             UID = uid;
             this.Name = name;
@@ -188,10 +229,11 @@ namespace Model
         /// <summary>
         /// Returns the cube's width
         /// </summary>
-        public double getWidth()
+        public float getWidth()
         {
+  
             // Return square root of the mass
-            return Math.Sqrt(Mass);
+            return (float)Math.Pow(Mass,0.65);
         }
 
         public string GetUID()
