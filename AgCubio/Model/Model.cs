@@ -19,7 +19,7 @@ namespace Model
         private readonly int Width;
         private Object MakeCubeLock = new Object();
 
-        private string Part;
+
 
         // All cubes in the world object
         public Dictionary<string, Cube> DictionaryOfCubes;
@@ -55,54 +55,23 @@ namespace Model
             // Lock for thread safety
             lock (MakeCubeLock)
             {
-                
-                // Split input buffer at new lines
-                string[] SplitString = input.Split('\n');
-                foreach (string Item in SplitString)
+
+                Cube adding = JsonConvert.DeserializeObject<Cube>(input);
+
+                // Ensure we only add actual cubes
+                if (adding != null)
                 {
-                    bool Changed = false; // Used to 
-                    string FinalString = null; // Used to append broken data
-
-                    // Ensure no error strings are accepted
-                    if (!Item.StartsWith("\0\0") && Item != string.Empty)
+                    // Add first entry to player dictionary
+                    if (FirstPlayer)
                     {
-                        // Broken item at first index (no valid start)
-                        if (!Item.StartsWith("{"))
-                        {
-                            // append this item to the broken string from last iteration
-                            FinalString = Part + Item;
-                            Changed = true;
-                        }
-                        // Broken item and last index (no valid ending)
-                        if (!Item.EndsWith("}"))
-                            // Save string to be appended next iteration
-                            Part = Item;
-                        else // Complete valid item
-                            FinalString = Item;
+                        PlayerCubes.Add(adding.GetUID(), adding);
+                        PlayersName = adding.Name;
 
-                        // Add cube to set
-                        Cube adding;
-                        if (FinalString != null && Changed == false)
-                        {
-                            adding = JsonConvert.DeserializeObject<Cube>(FinalString);
-
-                            // Ensure we only add actual cubes
-                            if (adding != null)
-                            {
-                                // Add first entry to player dictionary
-                                if (FirstPlayer)
-                                {
-                                    PlayerCubes.Add(adding.GetUID(), adding);
-                                    PlayersName = adding.Name;
-
-                                    FirstPlayer = false;
-                                }
-                                else
-                                {
-                                    UpdateCube(adding);
-                                }   
-                            }
-                        }
+                        FirstPlayer = false;
+                    }
+                    else
+                    {
+                        UpdateCube(adding);
                     }
                 }
             }
@@ -113,7 +82,7 @@ namespace Model
             // L
             lock (MakeCubeLock)
             {
-                foreach(Cube item in DictionaryOfCubes.Values)
+                foreach (Cube item in DictionaryOfCubes.Values)
                 {
                     yield return item;
                 }
@@ -142,7 +111,7 @@ namespace Model
             // Check if cube is in DictionaryOfCubes.
             if (!DictionaryOfCubes.ContainsKey(NewCube.GetUID()) && !PlayerCubes.ContainsKey(NewCube.GetUID()))
             {
-                if(NewCube.Name != PlayersName)
+                if (NewCube.Name != PlayersName)
                     DictionaryOfCubes.Add(NewCube.GetUID(), NewCube);
                 else
                     PlayerCubes.Add(NewCube.GetUID(), NewCube);
@@ -164,7 +133,7 @@ namespace Model
                     }
                 }
 
-                if(PlayerCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
+                if (PlayerCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
                 {
                     // Update Mass
                     if (NewCube.Mass == 0) // Delete if cube has 0 mass.
@@ -211,11 +180,13 @@ namespace Model
         [JsonProperty]
         public float Y;
 
+        [JsonProperty]
+        public int team_id;
         /// <summary>
         /// Constructor used to initialize each member variable
         /// </summary>
         [JsonConstructor]
-        public Cube(String uid, string name, int color, float mass, bool food, float loc_x, float loc_y)
+        public Cube(String uid, string name, int color, float mass, bool food, float loc_x, float loc_y, int Team_id)
         {
             UID = uid;
             this.Name = name;
@@ -224,6 +195,7 @@ namespace Model
             FoodStatus = food;
             this.X = loc_x;
             this.Y = loc_y;
+            this.team_id = Team_id;
         }
 
         /// <summary>
@@ -231,9 +203,9 @@ namespace Model
         /// </summary>
         public float getWidth()
         {
-  
+
             // Return square root of the mass
-            return (float)Math.Pow(Mass,0.65);
+            return (float)Math.Pow(Mass, 0.65);
         }
 
         public string GetUID()

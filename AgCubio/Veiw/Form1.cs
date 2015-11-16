@@ -12,11 +12,13 @@ using System.Net.Sockets;
 using System.Net;
 using Network_Controller;
 using Model;
+using Newtonsoft.Json;
+using System.Threading;
 namespace View
 {
     public partial class AdCubioForm : Form
     {
-        delegate void ReceiveDelegate(string hi);
+        delegate void ReceiveDelegate(PreservedState State);
         World TheWorld;
 
         Network_Controller.PreservedState TheState;
@@ -47,18 +49,22 @@ namespace View
 
         }
 
-        void Receive(string Buffer)
+        /* Tanner!
+        * I changed some things. If you have questions text me!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        */
+
+        void Receive(PreservedState State)
         {
             lock (ReceiveLock)
             {
 
                 // Initial receive
-                if (Buffer == "Connected")
+                if (GameState == 0)
                 {
-
-
                     // Send player name
-                    Network.Send(TheState.TheSocket, NameTextBox.Text);
+                    Network.Send(State.TheSocket, NameTextBox.Text);
 
                     this.Invoke(new MethodInvoker(delegate
                     {
@@ -70,8 +76,45 @@ namespace View
                 }
                 else // Receive data
                 {
-                    TheWorld.makeCube(Buffer);
-                    Network.i_want_more_data(TheState);
+                    lock(State.sb)
+                    {
+                        lock (TheWorld)
+                        {
+                            // Split String
+                            string[] SplitString = State.sb.ToString().Split('\n');
+
+                            // Go through every split string item.
+                            foreach (string Item in SplitString)
+                            {
+                                // See if the item is a complete string
+                                if (Item.StartsWith("{") && Item.EndsWith("}"))
+                                {
+                                    try
+                                    {
+                                        //(uncomment for debuging)
+                                        //Cube adding = JsonConvert.DeserializeObject<Cube>(Item);
+
+                                        TheWorld.makeCube(Item);
+                                    }
+                                    catch (Exception e)
+                                    {
+
+                                    }
+                                }
+                                else // The item is not complete.
+                                {
+                                    // Clear the the string builder.
+                                    State.sb.Clear();
+                                    // Append the incomplete item to the string builder. 
+                                    State.sb.Append(Item);
+                                }
+
+                            }
+                            // Get more data.
+                            Network.i_want_more_data(State);
+                        }
+                    }
+                   
                 }
             }
         }
@@ -166,7 +209,7 @@ namespace View
                 // Get player's cube
                 sendRequest("move", Mousex, Mousey);
                 Invalidate();
-                CalcFrames();
+                //CalcFrames();
 
             }
         }

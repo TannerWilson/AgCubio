@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Diagnostics;
 using Model;
+using System.Threading;
 
 namespace Network_Controller
 {
@@ -86,7 +87,7 @@ namespace Network_Controller
 
             socket.BeginConnect(hostep, new AsyncCallback(Connected_to_Server), NewPreserved);
 
-
+      
 
 
             return socket;
@@ -104,7 +105,7 @@ namespace Network_Controller
                 // End the connection
                 TheState.TheSocket.EndConnect(state_in_an_ar_object);
 
-                TheState.Callback.DynamicInvoke("Connected");
+                TheState.Callback.DynamicInvoke(TheState);
                 // Start receiving state
                 TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
             
@@ -119,16 +120,20 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
-            lock(Lock)
+            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+            
+            lock (TheState.sb)
             {
                 // Get the state back from prameter
-                PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+                
+                
                 // Get number of bytes recieved and end the receive
                 int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
-                // Get the buffer returned from the server
-                string bufferToString = encoding.GetString(TheState.Buffer);
+                string ConvertedString = encoding.GetString(TheState.Buffer);
 
-                TheState.Callback.DynamicInvoke(bufferToString);
+                TheState.sb.Append(ConvertedString);
+
+                TheState.Callback.DynamicInvoke(TheState);
             }
 
         }
