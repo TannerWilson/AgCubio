@@ -33,7 +33,6 @@
             this.ServerTextBox = new System.Windows.Forms.TextBox();
             this.NameTextBox = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.FramesLabel = new System.Windows.Forms.Label();
             this.MassLabel = new System.Windows.Forms.Label();
             this.LogInPanel.SuspendLayout();
@@ -41,7 +40,6 @@
             // 
             // LogInPanel
             // 
-            this.LogInPanel.Controls.Add(this.label2);
             this.LogInPanel.Controls.Add(this.ServerLabel);
             this.LogInPanel.Controls.Add(this.label1);
             this.LogInPanel.Controls.Add(this.ServerTextBox);
@@ -84,15 +82,6 @@
             this.label1.Size = new System.Drawing.Size(67, 13);
             this.label1.TabIndex = 2;
             this.label1.Text = "Player Name";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(0, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(35, 13);
-            this.label2.TabIndex = 4;
-            this.label2.Text = "label2";
             // 
             // FramesLabel
             // 
@@ -138,7 +127,6 @@
         private System.Windows.Forms.Label ServerLabel;
         private System.Windows.Forms.TextBox ServerTextBox;
         private System.Windows.Forms.TextBox NameTextBox;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label FramesLabel;
         private System.Windows.Forms.Label MassLabel;
