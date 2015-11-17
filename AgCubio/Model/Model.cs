@@ -55,7 +55,6 @@ namespace Model
             // Lock for thread safety
             lock (MakeCubeLock)
             {
-
                 Cube adding = JsonConvert.DeserializeObject<Cube>(input);
 
                 // Ensure we only add actual cubes
@@ -77,30 +76,31 @@ namespace Model
             }
         }
 
+        /// <summary>
+        /// Returns all other cubes
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<Cube> GetCubeValues()
         {
-            // L
             lock (MakeCubeLock)
             {
                 foreach (Cube item in DictionaryOfCubes.Values)
-                {
                     yield return item;
-                }
             }
         }
 
+        /// <summary>
+        /// Returns the players cubes
+        /// </summary>
+        /// <returns></returns>
         public IEnumerable<Cube> GetPlayerCubes()
         {
             lock (MakeCubeLock)
             {
                 foreach (Cube item in PlayerCubes.Values)
-                {
                     yield return item;
-                }
             }
         }
-
-
 
         /// <summary>
         /// Updates values or adds cubes to DictionaryOfCubes
@@ -146,10 +146,7 @@ namespace Model
                     }
                 }
             }
-
         }
-
-
     }
 
     /// <summary>

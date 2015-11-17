@@ -62,7 +62,7 @@ namespace Network_Controller
     {
         // Encoding used in networking
         private static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
-
+        // Threading lock
         private static Object Lock = new Object();
 
         /// <summary>
@@ -74,32 +74,25 @@ namespace Network_Controller
         public static Socket Connect_to_Server(Delegate callback, string hostname)
         {
             Socket socket = null;
-
+            // Connect to server
             IPHostEntry ipHostInfo = Dns.Resolve(hostname);
             IPAddress ipAddress = ipHostInfo.AddressList[0];
-
-
             IPEndPoint hostep = new IPEndPoint(ipAddress, 11000);
-
+            // Create socket to connect
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            // Make new game state
             PreservedState NewPreserved = new PreservedState(socket, callback);
-
+            
             socket.BeginConnect(hostep, new AsyncCallback(Connected_to_Server), NewPreserved);
-
-      
-
-
             return socket;
         }
 
         /// <summary>
-        /// 
+        /// Connects to the cerver
         /// </summary>
         /// <param name="state_in_an_ar_object"></param>
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
-        {
-            
+        {            
                 // Grab state object from param
                 PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
                 // End the connection
@@ -107,9 +100,7 @@ namespace Network_Controller
 
                 TheState.Callback.DynamicInvoke(TheState);
                 // Start receiving state
-                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
-            
-            
+                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);            
         }
 
         /// <summary>
@@ -120,13 +111,11 @@ namespace Network_Controller
         /// <param name="state_in_an_ar_object"></param>
         public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
         {
+            // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
             
             lock (TheState.sb)
-            {
-                // Get the state back from prameter
-                
-                
+            {               
                 // Get number of bytes recieved and end the receive
                 int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
                 string ConvertedString = encoding.GetString(TheState.Buffer);
@@ -135,7 +124,6 @@ namespace Network_Controller
 
                 TheState.Callback.DynamicInvoke(TheState);
             }
-
         }
 
         /// <summary>
