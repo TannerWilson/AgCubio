@@ -69,9 +69,7 @@ namespace Model
                         FirstPlayer = false;
                     }
                     else
-                    {
                         UpdateCube(adding);
-                    }
                 }
             }
         }
@@ -163,7 +161,7 @@ namespace Model
         public string Name;
         // Color of the cube
         [JsonProperty]
-        public int Color;
+        public int argb_color;
         // Mass of the cube
         [JsonProperty]
         public float Mass;
@@ -183,11 +181,11 @@ namespace Model
         /// Constructor used to initialize each member variable
         /// </summary>
         [JsonConstructor]
-        public Cube(String uid, string name, int color, float mass, bool food, float loc_x, float loc_y, int Team_id)
+        public Cube(String uid, string name, int argb_color, float mass, bool food, float loc_x, float loc_y, int Team_id)
         {
             UID = uid;
             this.Name = name;
-            this.Color = color;
+            this.argb_color = argb_color;
             this.Mass = mass;
             FoodStatus = food;
             this.X = loc_x;

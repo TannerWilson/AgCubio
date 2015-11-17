@@ -1,6 +1,6 @@
 ﻿namespace View
 {
-    partial class AdCubioForm
+    partial class AgCubioForm
     {
         /// <summary>
         /// Required designer variable.
@@ -30,9 +30,9 @@
         {
             this.LogInPanel = new System.Windows.Forms.Panel();
             this.ServerLabel = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.ServerTextBox = new System.Windows.Forms.TextBox();
             this.NameTextBox = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.FramesLabel = new System.Windows.Forms.Label();
             this.MassLabel = new System.Windows.Forms.Label();
             this.LogInPanel.SuspendLayout();
@@ -58,6 +58,15 @@
             this.ServerLabel.TabIndex = 3;
             this.ServerLabel.Text = "Sever ";
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(126, 159);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(67, 13);
+            this.label1.TabIndex = 2;
+            this.label1.Text = "Player Name";
+            // 
             // ServerTextBox
             // 
             this.ServerTextBox.Location = new System.Drawing.Point(228, 262);
@@ -73,15 +82,6 @@
             this.NameTextBox.Size = new System.Drawing.Size(151, 20);
             this.NameTextBox.TabIndex = 0;
             this.NameTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.NameTextBox_KeyDown);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(126, 159);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(67, 13);
-            this.label1.TabIndex = 2;
-            this.label1.Text = "Player Name";
             // 
             // FramesLabel
             // 
@@ -101,7 +101,7 @@
             this.MassLabel.TabIndex = 2;
             this.MassLabel.Text = "Mass:";
             // 
-            // AdCubioForm
+            // AgCubioForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -109,8 +109,9 @@
             this.Controls.Add(this.MassLabel);
             this.Controls.Add(this.FramesLabel);
             this.Controls.Add(this.LogInPanel);
-            this.Name = "AdCubioForm";
+            this.Name = "AgCubioForm";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.AgCubioForm_Load);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.AdCubioForm_Paint);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.AdCubioForm_KeyDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.AdCubioForm_MouseMove);

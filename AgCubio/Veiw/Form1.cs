@@ -16,7 +16,10 @@ using Newtonsoft.Json;
 using System.Threading;
 namespace View
 {
-    public partial class AdCubioForm : Form
+    /// <summary>
+    /// Form used to paint the AgCubio game.
+    /// </summary>
+    public partial class AgCubioForm : Form
     {
         delegate void ReceiveDelegate(PreservedState State);
         // Used to represent the current game
@@ -28,22 +31,29 @@ namespace View
         // Shows when the game is being played
         private int GameState = 0;
 
-        private int count;
+        private Cube player;
+
         // Used to calculate FPS
         private int NumOfFrames = 0;
         private int LastTime;
+
         // Players current mass
         private int PlayerMass;
+
         // Mouse location
         private int Mousex;
         private int Mousey;
+
+        // Graphics object used
+        private Graphics g;
+
         // Thread lock
         private Object ReceiveLock = new Object();
 
         /// <summary>
         /// Creates new AgCubio game and form
         /// </summary>
-        public AdCubioForm()
+        public AgCubioForm()
         {
             InitializeComponent();
             DoubleBuffered = true;
@@ -66,13 +76,15 @@ namespace View
 
                     this.Invoke(new MethodInvoker(delegate
                     {
+                        // Update form views
                         LogInPanel.Visible = false;
+
                         GameState = 1;
                     }));
                 }
                 else // Receive data
                 {
-                    lock(State.sb)
+                    lock (State.sb)
                     {
                         lock (TheWorld)
                         {
@@ -104,7 +116,7 @@ namespace View
                             // Get more data.
                             Network.i_want_more_data(State);
                         }
-                    }                   
+                    }
                 }
             }
         }
@@ -157,45 +169,60 @@ namespace View
         /// </summary>
         private void AdCubioForm_Paint(object sender, PaintEventArgs e)
         {
+
             if (GameState == 1)
             {
-                count++;
                 if (TheWorld.PlayerCubes != null)
-                {                    
+                {
                     // Draw all other cubes
                     foreach (Cube cube in TheWorld.GetCubeValues())
-                    {    
+                    {
+                        float scale = CalcScale(cube.getWidth());
                         // Set brush color                   
-                        myBrush = new SolidBrush(Color.Blue);
+                        myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
                         // Draw cube
-                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth() + 5, cube.getWidth() + 5);
+                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2) * scale, cube.Y - (cube.getWidth() / 2) * scale, cube.getWidth() * scale, cube.getWidth() * scale);
                     }
                     // Draw all player cubes
                     foreach (Cube cube in TheWorld.GetPlayerCubes())
                     {
                         if (cube.Mass != 0)
                         {
-                            // Set new player mass
-                            PlayerMass = (int) cube.Mass;
+                            // Set and update new player mass
+                            PlayerMass = (int)cube.Mass;
                             MassLabel.Text = "Mass: " + PlayerMass;
                             MassLabel.Refresh();
+
                             // Set brush to cube color
-                            myBrush = new System.Drawing.SolidBrush(Color.Black);
+                            myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
                             // Draw cube
                             float width = cube.getWidth();
                             e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
-                            myBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Red);
+
+                            // Draw player name
+                            myBrush = new SolidBrush(Color.Black);
+                            e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
                         }
-                        e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y));
+                        else // Player has died
+                        {
+                            // Ask if player wants to continue
+
+                            //DialogResult dialogResult = MessageBox.Show("You Died!\n", "Do you want to continue?", MessageBoxButtons.YesNo);
+                            //if (dialogResult == DialogResult.Yes) // yes was selected
+                            //    GameState = 0;
+                            //else // No was selected
+                            //    Close();
+                        }
                     }
                 }
                 // Send move request
                 sendRequest("move", Mousex, Mousey);
                 // Calculate FPS then paint
                 CalcFrames();
-                Invalidate();                
+                Invalidate();
             }
         }
+
 
         /// <summary>
         /// Calculates the current frames per second
@@ -216,12 +243,12 @@ namespace View
         /// <summary>
         /// Calculates the offest used to scale and "zoom" the world view
         /// </summary>
-        public int CalcOffset()
+        public float CalcScale(float width)
         {
-            // TODO: Finish this shizzzzz
-            int offSet = PlayerMass * 10;
 
-            return offSet;
+            double scale = this.Width /  (width * 40);
+
+            return (float) scale;
         }
 
         /// <summary>
@@ -260,9 +287,14 @@ namespace View
         {
             // Send split request when space is pressed
             if (e.KeyCode == Keys.Space)
-            {               
+            {
                 sendRequest("split", Mousex, Mousey);
             }
+        }
+
+        private void AgCubioForm_Load(object sender, EventArgs e)
+        {
+            KeyPreview = true;
         }
     }
 }
