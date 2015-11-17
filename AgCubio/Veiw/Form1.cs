@@ -90,7 +90,7 @@ namespace View
                         {
                             // Split String
                             string[] SplitString = State.sb.ToString().Split('\n');
-
+                            State.sb.Clear();
                             // Go through every split string item.
                             foreach (string Item in SplitString)
                             {
@@ -99,16 +99,14 @@ namespace View
                                 {
                                     try
                                     {
-                                        //(uncomment for debuging)
-                                        //Cube adding = JsonConvert.DeserializeObject<Cube>(Item);
+              
                                         TheWorld.makeCube(Item);
                                     }
-                                    catch (Exception e) { }
+                                    catch (Exception e) { Cube adding = JsonConvert.DeserializeObject<Cube>(Item); }
                                 }
                                 else // The item is not complete.
                                 {
-                                    // Clear the the string builder.
-                                    State.sb.Clear();
+
                                     // Append the incomplete item to the string builder. 
                                     State.sb.Append(Item);
                                 }
@@ -181,7 +179,7 @@ namespace View
                         // Set brush color                   
                         myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
                         // Draw cube
-                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2) * scale, cube.Y - (cube.getWidth() / 2) * scale, cube.getWidth() * scale, cube.getWidth() * scale);
+                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth() );
                     }
                     // Draw all player cubes
                     foreach (Cube cube in TheWorld.GetPlayerCubes())
