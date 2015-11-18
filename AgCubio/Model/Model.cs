@@ -31,6 +31,8 @@ namespace Model
 
         private string PlayersName;
 
+
+
         /// <summary>
         /// Constructs a new world object given a height width and collection of cubes
         /// </summary>
@@ -51,101 +53,40 @@ namespace Model
         /// </summary>
         public void makeCube(string input)
         {
+            Cube adding = JsonConvert.DeserializeObject<Cube>(input);
 
-            // Lock for thread safety
-            lock (MakeCubeLock)
+            // Add first entry to player dictionary
+            if (FirstPlayer)
             {
-                Cube adding = JsonConvert.DeserializeObject<Cube>(input);
-
-                // Ensure we only add actual cubes
-                if (adding != null)
-                {
-                    // Add first entry to player dictionary
-                    if (FirstPlayer)
-                    {
-                        PlayerCubes.Add(adding.GetUID(), adding);
-                        PlayersName = adding.Name;
-
-                        FirstPlayer = false;
-                    }
-                    else
-                        UpdateCube(adding);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Returns all other cubes
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<Cube> GetCubeValues()
-        {
-            lock (MakeCubeLock)
-            {
-                foreach (Cube item in DictionaryOfCubes.Values)
-                    yield return item;
-            }
-        }
-
-        /// <summary>
-        /// Returns the players cubes
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<Cube> GetPlayerCubes()
-        {
-            lock (MakeCubeLock)
-            {
-                foreach (Cube item in PlayerCubes.Values)
-                    yield return item;
-            }
-        }
-
-        /// <summary>
-        /// Updates values or adds cubes to DictionaryOfCubes
-        /// </summary>
-        /// <param name="NewCube"></param>
-        void UpdateCube(Cube NewCube)
-        {
-            // Check if cube is in DictionaryOfCubes.
-            if (!DictionaryOfCubes.ContainsKey(NewCube.GetUID()) && !PlayerCubes.ContainsKey(NewCube.GetUID()))
-            {
-                if (NewCube.Name != PlayersName)
-                    DictionaryOfCubes.Add(NewCube.GetUID(), NewCube);
-                else
-                    PlayerCubes.Add(NewCube.GetUID(), NewCube);
+                PlayerCubes.Add(adding.GetUID(), adding);
+                PlayersName = adding.Name;
+                FirstPlayer = false;
             }
             else
             {
-                Cube NewCubeValue;
-                //Update values
-                if (DictionaryOfCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
+                if (adding.Name == PlayersName)
                 {
-                    // Update Mass
-                    if (NewCube.Mass == 0) // Delete if cube has 0 mass.
-                        DictionaryOfCubes.Remove(NewCube.GetUID());
+                    if (adding.Mass == 0)
+                        PlayerCubes.Remove(adding.GetUID());
                     else
-                    {
-                        NewCubeValue.Mass = NewCube.Mass;
-                        NewCubeValue.X = NewCube.X;
-                        NewCubeValue.Y = NewCube.Y;
-                    }
+                        PlayerCubes[adding.GetUID()] = adding;
                 }
-
-                if (PlayerCubes.TryGetValue(NewCube.GetUID(), out NewCubeValue))
+                else
                 {
-                    // Update Mass
-                    if (NewCube.Mass == 0) // Delete if cube has 0 mass.
-                        PlayerCubes.Remove(NewCube.GetUID());
+                    if (adding.Mass == 0)
+                        DictionaryOfCubes.Remove(adding.GetUID());
                     else
-                    {
-                        NewCubeValue.Mass = NewCube.Mass;
-                        NewCubeValue.X = NewCube.X;
-                        NewCubeValue.Y = NewCube.Y;
-                    }
+                        DictionaryOfCubes[adding.GetUID()] = adding;
                 }
             }
+
         }
+
+
+
+
     }
+
 
     /// <summary>
     ///  Helper class to "world" used to store all information associated with a given cube
@@ -168,7 +109,7 @@ namespace Model
 
         // If cube is food or not
         [JsonProperty]
-        private bool FoodStatus;
+        public bool FoodStatus;
         // Cubes X and Y positions in space
         [JsonProperty]
         public float X;

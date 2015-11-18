@@ -31,8 +31,6 @@ namespace View
         // Shows when the game is being played
         private int GameState = 0;
 
-        private Cube player;
-
         // Used to calculate FPS
         private int NumOfFrames = 0;
         private int LastTime;
@@ -43,12 +41,6 @@ namespace View
         // Mouse location
         private int Mousex;
         private int Mousey;
-
-        // Graphics object used
-        private Graphics g;
-
-        // Thread lock
-        private Object ReceiveLock = new Object();
 
         /// <summary>
         /// Creates new AgCubio game and form
@@ -66,10 +58,11 @@ namespace View
         /// <param name="State"></param>
         void Receive(PreservedState State)
         {
-            lock (ReceiveLock)
+
+            // Initial receive
+            if (GameState == 0)
             {
-                // Initial receive
-                if (GameState == 0)
+                if (State.sb.ToString() != "Could not connect!")
                 {
                     // Send player name
                     Network.Send(State.TheSocket, NameTextBox.Text);
@@ -78,44 +71,56 @@ namespace View
                     {
                         // Update form views
                         LogInPanel.Visible = false;
-
-                        GameState = 1;
                     }));
+
+                    GameState = 1;
+
                 }
-                else // Receive data
+                else
                 {
-                    lock (State.sb)
+                    MessageBox.Show("Could not connect to server!");
+                    State.sb.Clear();
+                }
+
+            }
+            else // Receive data
+            {
+                string[] SplitString = null;
+
+                lock (TheState.sb)
+                {
+                    // Split String
+                    SplitString = State.sb.ToString().Split('\n');
+
+                    State.sb.Clear();
+                }
+
+                // Go through every split string item.
+                foreach (string Item in SplitString)
+                {
+
+                    // See if the item is a complete string
+                    if (Item.StartsWith("{") && Item.EndsWith("}"))
                     {
                         lock (TheWorld)
                         {
-                            // Split String
-                            string[] SplitString = State.sb.ToString().Split('\n');
-                            State.sb.Clear();
-                            // Go through every split string item.
-                            foreach (string Item in SplitString)
-                            {
-                                // See if the item is a complete string
-                                if (Item.StartsWith("{") && Item.EndsWith("}"))
-                                {
-                                    try
-                                    {
-              
-                                        TheWorld.makeCube(Item);
-                                    }
-                                    catch (Exception e) { Cube adding = JsonConvert.DeserializeObject<Cube>(Item); }
-                                }
-                                else // The item is not complete.
-                                {
-
-                                    // Append the incomplete item to the string builder. 
-                                    State.sb.Append(Item);
-                                }
-                            }
-                            // Get more data.
-                            Network.i_want_more_data(State);
+                            TheWorld.makeCube(Item);
+                        }
+                    }
+                    else // The item is not complete.
+                    {
+                        if (!Item.StartsWith("\0\0\0"))
+                        {
+                            // Append the incomplete item to the string builder. 
+                            State.sb.Append(Item);
                         }
                     }
                 }
+                // Get more data.
+                Network.i_want_more_data(State);
+
+
+
             }
         }
 
@@ -129,15 +134,10 @@ namespace View
 
             // Delagate called when connection is made
             ReceiveDelegate ReceiveCallBack = new ReceiveDelegate(Receive);
-            try
-            {
-                Socket NewSocket = Network.Connect_to_Server(ReceiveCallBack, ServerTextBox.Text);
-                TheState = new Network_Controller.PreservedState(NewSocket, ReceiveCallBack);
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show("Unable to connect to server.\n" + e.Message);
-            }
+
+            Socket NewSocket = Network.Connect_to_Server(ReceiveCallBack, ServerTextBox.Text);
+            TheState = new Network_Controller.PreservedState(NewSocket, ReceiveCallBack);
+
         }
 
         /// <summary>
@@ -167,58 +167,66 @@ namespace View
         /// </summary>
         private void AdCubioForm_Paint(object sender, PaintEventArgs e)
         {
-
             if (GameState == 1)
             {
-                if (TheWorld.PlayerCubes != null)
+                List<Cube> PlayerList = null;
+                List<Cube> CubeList = null;
+
+                lock (TheWorld)
                 {
-                    // Draw all other cubes
-                    foreach (Cube cube in TheWorld.GetCubeValues())
+                    PlayerList = TheWorld.PlayerCubes.Values.ToList<Cube>();
+                    CubeList = TheWorld.DictionaryOfCubes.Values.ToList<Cube>();
+                }
+
+                int NumOfFood = 0;
+
+                //// Draw all other cubes
+                foreach (Cube cube in CubeList)
+                {
+                    if(cube.FoodStatus == true)
                     {
-                        float scale = CalcScale(cube.getWidth());
-                        // Set brush color                   
+                        NumOfFood += 1;
+                    }
+                    // Set brush color                   
+                    myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
+                    // Draw cube
+                    e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
+
+                    // Draw player name
+                    myBrush = new SolidBrush(Color.Black);
+                    e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
+
+                }
+
+                FoodLabel.Text = NumOfFood.ToString();
+                FoodLabel.Refresh();
+
+                // Draw all player cubes
+                foreach (Cube cube in PlayerList)
+                {
+
+                    if (cube.Mass != 0)
+                    {
+                        // Set brush to cube color
                         myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
                         // Draw cube
-                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth() );
-                    }
-                    // Draw all player cubes
-                    foreach (Cube cube in TheWorld.GetPlayerCubes())
-                    {
-                        if (cube.Mass != 0)
-                        {
-                            // Set and update new player mass
-                            PlayerMass = (int)cube.Mass;
-                            MassLabel.Text = "Mass: " + PlayerMass;
-                            MassLabel.Refresh();
+                        float width = cube.getWidth();
+                        e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
 
-                            // Set brush to cube color
-                            myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
-                            // Draw cube
-                            float width = cube.getWidth();
-                            e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
-
-                            // Draw player name
-                            myBrush = new SolidBrush(Color.Black);
-                            e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
-                        }
-                        else // Player has died
-                        {
-                            // Ask if player wants to continue
-
-                            //DialogResult dialogResult = MessageBox.Show("You Died!\n", "Do you want to continue?", MessageBoxButtons.YesNo);
-                            //if (dialogResult == DialogResult.Yes) // yes was selected
-                            //    GameState = 0;
-                            //else // No was selected
-                            //    Close();
-                        }
+                        // Draw player name
+                        myBrush = new SolidBrush(Color.Black);
+                        e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
                     }
                 }
+
+
                 // Send move request
                 sendRequest("move", Mousex, Mousey);
                 // Calculate FPS then paint
                 CalcFrames();
                 Invalidate();
             }
+
         }
 
 
@@ -244,9 +252,9 @@ namespace View
         public float CalcScale(float width)
         {
 
-            double scale = this.Width /  (width * 40);
+            double scale = this.Width / (width * 40);
 
-            return (float) scale;
+            return (float)scale;
         }
 
         /// <summary>

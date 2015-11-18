@@ -82,7 +82,7 @@ namespace Network_Controller
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             // Make new game state
             PreservedState NewPreserved = new PreservedState(socket, callback);
-            
+
             socket.BeginConnect(hostep, new AsyncCallback(Connected_to_Server), NewPreserved);
             return socket;
         }
@@ -92,15 +92,25 @@ namespace Network_Controller
         /// </summary>
         /// <param name="state_in_an_ar_object"></param>
         public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
-        {            
-                // Grab state object from param
-                PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+        {
+            // Grab state object from param
+            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+            try
+            {
+
                 // End the connection
                 TheState.TheSocket.EndConnect(state_in_an_ar_object);
 
                 TheState.Callback.DynamicInvoke(TheState);
                 // Start receiving state
-                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);            
+                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
+            }
+            catch (Exception e)
+            {
+                TheState.sb.Append("Could not connect!");
+                TheState.Callback.DynamicInvoke(TheState);
+            }
+
         }
 
         /// <summary>
@@ -113,17 +123,19 @@ namespace Network_Controller
         {
             // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            
-            lock (TheState.sb)
-            {               
+
+            lock(TheState.sb)
+            {
                 // Get number of bytes recieved and end the receive
                 int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
+
                 string ConvertedString = encoding.GetString(TheState.Buffer);
 
                 TheState.sb.Append(ConvertedString);
 
                 TheState.Callback.DynamicInvoke(TheState);
             }
+
         }
 
         /// <summary>
@@ -163,7 +175,7 @@ namespace Network_Controller
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-               // Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
+                // Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
 
             }
             catch (Exception e)

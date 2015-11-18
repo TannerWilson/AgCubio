@@ -35,6 +35,8 @@
             this.NameTextBox = new System.Windows.Forms.TextBox();
             this.FramesLabel = new System.Windows.Forms.Label();
             this.MassLabel = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.FoodLabel = new System.Windows.Forms.Label();
             this.LogInPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -73,6 +75,7 @@
             this.ServerTextBox.Name = "ServerTextBox";
             this.ServerTextBox.Size = new System.Drawing.Size(151, 20);
             this.ServerTextBox.TabIndex = 1;
+            this.ServerTextBox.Text = "localhost";
             this.ServerTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ServerTextBox_KeyDown);
             // 
             // NameTextBox
@@ -101,11 +104,31 @@
             this.MassLabel.TabIndex = 2;
             this.MassLabel.Text = "Mass:";
             // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(711, 107);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(34, 13);
+            this.label3.TabIndex = 3;
+            this.label3.Text = "Food:";
+            // 
+            // FoodLabel
+            // 
+            this.FoodLabel.AutoSize = true;
+            this.FoodLabel.Location = new System.Drawing.Point(751, 107);
+            this.FoodLabel.Name = "FoodLabel";
+            this.FoodLabel.Size = new System.Drawing.Size(13, 13);
+            this.FoodLabel.TabIndex = 4;
+            this.FoodLabel.Text = "0";
+            // 
             // AgCubioForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(786, 583);
+            this.Controls.Add(this.FoodLabel);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.MassLabel);
             this.Controls.Add(this.FramesLabel);
             this.Controls.Add(this.LogInPanel);
@@ -131,6 +154,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label FramesLabel;
         private System.Windows.Forms.Label MassLabel;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label FoodLabel;
     }
 }
 
