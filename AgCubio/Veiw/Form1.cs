@@ -118,9 +118,6 @@ namespace View
                 }
                 // Get more data.
                 Network.i_want_more_data(State);
-
-
-
             }
         }
 
@@ -195,7 +192,6 @@ namespace View
                     // Draw player name
                     myBrush = new SolidBrush(Color.Black);
                     e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X - 20, cube.Y));
-
                 }
                 // Update food label
                 FoodLabel.Text = NumOfFood.ToString();

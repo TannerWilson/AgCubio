@@ -64,6 +64,7 @@ namespace Model
             }
             else
             {
+                // Add to player cubes
                 if (adding.Name == PlayersName)
                 {
                     if (adding.Mass == 0)
@@ -71,7 +72,7 @@ namespace Model
                     else
                         PlayerCubes[adding.GetUID()] = adding;
                 }
-                else
+                else // Add to all other cubes
                 {
                     if (adding.Mass == 0)
                         DictionaryOfCubes.Remove(adding.GetUID());
@@ -79,12 +80,7 @@ namespace Model
                         DictionaryOfCubes[adding.GetUID()] = adding;
                 }
             }
-
         }
-
-
-
-
     }
 
 
