@@ -35,9 +35,9 @@ namespace View
         private int NumOfFrames = 0;
         private int LastTime;
 
-        // Players current mass
-        private int PlayerMass;
-
+        // Players current mass and width
+        private float PlayerMass = 0;
+        private float PlayerWidth;
         // Mouse location
         private int Mousex;
         private int Mousey;
@@ -183,28 +183,34 @@ namespace View
                 //// Draw all other cubes
                 foreach (Cube cube in CubeList)
                 {
-                    if(cube.FoodStatus == true)
+                    if (cube.FoodStatus == true)
                     {
                         NumOfFood += 1;
                     }
                     // Set brush color                   
                     myBrush = new SolidBrush(Color.FromArgb(cube.argb_color));
                     // Draw cube
-                    e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth(), cube.getWidth());
+                    e.Graphics.FillRectangle(myBrush, cube.X - (cube.getWidth() / 2), cube.Y - (cube.getWidth() / 2), cube.getWidth()+3, cube.getWidth()+3);
 
                     // Draw player name
                     myBrush = new SolidBrush(Color.Black);
-                    e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
+                    e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X - 20, cube.Y));
 
                 }
-
+                // Update food label
                 FoodLabel.Text = NumOfFood.ToString();
                 FoodLabel.Refresh();
+
+                // Used to display current player mass
+                int mass = 0;
 
                 // Draw all player cubes
                 foreach (Cube cube in PlayerList)
                 {
-
+                    // Update width and masses
+                    mass += (int)cube.Mass;
+                    PlayerMass += cube.Mass;
+                    PlayerWidth = cube.getWidth();
                     if (cube.Mass != 0)
                     {
                         // Set brush to cube color
@@ -215,10 +221,24 @@ namespace View
 
                         // Draw player name
                         myBrush = new SolidBrush(Color.Black);
-                        e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));
+                        e.Graphics.DrawString(cube.Name, new Font("Times New Roman", 15.0f), myBrush, new PointF(cube.X, cube.Y - 5));                       
                     }
                 }
 
+                // Player has died
+                if (mass == 0 && GameState == 1 && PlayerMass != 0)
+                {
+                    MessageBox.Show("You died!\n Your final mass was: " + PlayerMass);
+                    Close();
+                }
+
+                // Update width label
+                WidthLabel.Text = "Width: " + PlayerWidth;
+                WidthLabel.Refresh();
+
+                // Update mass label
+                MassLabel.Text = "Mass: " + mass;
+                MassLabel.Refresh();
 
                 // Send move request
                 sendRequest("move", Mousex, Mousey);

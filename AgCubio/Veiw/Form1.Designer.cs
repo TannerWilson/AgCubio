@@ -37,6 +37,7 @@
             this.MassLabel = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.FoodLabel = new System.Windows.Forms.Label();
+            this.WidthLabel = new System.Windows.Forms.Label();
             this.LogInPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -122,11 +123,21 @@
             this.FoodLabel.TabIndex = 4;
             this.FoodLabel.Text = "0";
             // 
+            // WidthLabel
+            // 
+            this.WidthLabel.AutoSize = true;
+            this.WidthLabel.Location = new System.Drawing.Point(708, 150);
+            this.WidthLabel.Name = "WidthLabel";
+            this.WidthLabel.Size = new System.Drawing.Size(38, 13);
+            this.WidthLabel.TabIndex = 6;
+            this.WidthLabel.Text = "Width:";
+            // 
             // AgCubioForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(786, 583);
+            this.Controls.Add(this.WidthLabel);
             this.Controls.Add(this.FoodLabel);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.MassLabel);
@@ -156,6 +167,7 @@
         private System.Windows.Forms.Label MassLabel;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label FoodLabel;
+        private System.Windows.Forms.Label WidthLabel;
     }
 }
 
