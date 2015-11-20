@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Network_Controller", "Network_Controller\Network_Controller.csproj", "{F2F7F03D-7FE0-487F-89E5-79938B925B5E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "server\Server.csproj", "{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{F2F7F03D-7FE0-487F-89E5-79938B925B5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2F7F03D-7FE0-487F-89E5-79938B925B5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2F7F03D-7FE0-487F-89E5-79938B925B5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
