@@ -211,6 +211,7 @@ namespace Network_Controller
         {
             // Set up OS listener
             IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            ipAddress.MapToIPv6();
             TcpListener listener = null;
             try
             {
