@@ -9,8 +9,11 @@ namespace server
 {
     class Server
     {
+        private World GameWorld;
+
         static void Main(string[] args)
         {
+            
 
         }
 
@@ -20,6 +23,7 @@ namespace server
         /// </summary>
         public void start()
         {
+            GameWorld = new World(1000, 1000);
 
         }
 

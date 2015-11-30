@@ -43,6 +43,11 @@ namespace Network_Controller
         public Delegate Callback;
 
         /// <summary>
+        /// Listener used for server listening
+        /// </summary>
+        TcpListener Listener;
+
+        /// <summary>
         /// Constructs a state object
         /// </summary>
         public PreservedState(Socket NewSocket, Delegate Receive)
@@ -51,6 +56,19 @@ namespace Network_Controller
             sb = new StringBuilder();
 
             Callback = Receive;
+            Listener = null;
+        }
+
+        /// <summary>
+        /// Constructs a state object
+        /// </summary>
+        public PreservedState(Socket NewSocket, Delegate Receive, TcpListener listener)
+        {
+            TheSocket = NewSocket;
+            sb = new StringBuilder();
+
+            Callback = Receive;
+            Listener = listener;
         }
 
     }
@@ -183,5 +201,68 @@ namespace Network_Controller
                 throw e;
             }
         }
+
+        /// <summary>
+        /// Asks the OS to listen for a connection and saves the callback function with that request. 
+        /// Upon a connection request coming in the OS should invoke the Accept_a_New_Client method 
+        /// </summary>
+        /// <param name="callback"></param>
+        public static void Server_Awaiting_Client_Loop(Delegate callback)
+        {
+            // Set up OS listener
+            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+            TcpListener listener = null;
+            try
+            {
+                listener = new TcpListener(ipAddress, 11000);
+                listener.Start();
+                Console.WriteLine("Awaiting connections...");
+            }
+            catch(Exception e) 
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            /*
+            Not sure how to go about calling the AcceptNewCLient Function.
+            all examples I found just used one function
+             */
+            PreservedState State = new PreservedState(null, callback, listener);
+            Accept_a_New_Client(State);
+
+            // Start listening loop
+            while (true)
+            {
+                // Socket used in next connection
+                Socket client = listener.AcceptSocket();
+                Console.WriteLine("A player has connected.");
+
+                var childSocketThread = new Thread(() =>
+                {
+                    byte[] data = new byte[100];
+                    int size = client.Receive(data);
+                    Console.WriteLine("Recieved data: ");
+                    for (int i = 0; i < size; i++)
+                        Console.Write(Convert.ToChar(data[i]));
+
+                    Console.WriteLine();
+
+                    client.Close();
+                });
+                childSocketThread.Start();
+            }
+        }
+
+        /// <summary>
+        /// Creates a new socket, Calls the callback provided by the above method
+        /// and awaits a new connection request.
+        /// </summary>
+        /// <param name="ar"></param>
+        public static void Accept_a_New_Client(IAsyncResult ar)
+        {
+
+
+        }
+
     }
 }
