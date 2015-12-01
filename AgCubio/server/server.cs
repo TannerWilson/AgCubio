@@ -4,16 +4,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Network_Controller;
+using View;
 
 namespace server
 {
     class Server
     {
-        private World GameWorld;
+        static private World GameWorld;
+
+        static HashSet<PreservedState> States;
+
+        static private int TickRate;
+
 
         static void Main(string[] args)
         {
-            
+
+            start();
 
         }
 
@@ -21,16 +29,17 @@ namespace server
         /// Populates the initial world (with food), 
         /// set up the heartbeat of the program, and await network client connections. 
         /// </summary>
-        public void start()
+        static public void start()
         {
             GameWorld = new World(1000, 1000);
-
+            Network.Server_Awaiting_Client_Loop(PlayerConnect);
+            Console.Read();
         }
 
         /// <summary>
         /// Sets up a callback to receive a players name and then request more data from the connection
         /// </summary>
-        public void ClientConnection()
+        static public void ClientConnection()
         {
 
         }
@@ -42,7 +51,7 @@ namespace server
         /// the socket. Finally it should send the current state of the world to the player.
         /// </summary>
         /// <returns></returns>
-        public Cube ReceivePalyer(string name)
+        static public Cube ReceivePalyer(string name)
         {
             Cube Player = null;
             return Player;
@@ -52,15 +61,45 @@ namespace server
         /// Receives data from clients. Should be either (move,x,y) or (split,x,y). 
         /// </summary>
         /// <param name="request"></param>
-        public void ClientData(string request)
+        static public void ClientData(string request)
         {
+
+        }
+
+        static void PlayerConnect(PreservedState State)
+        {
+            State.ServerCallback = GetPlayerName;
+            Network.i_want_more_data(State);
+        }
+
+        static void GetPlayerName(PreservedState State)
+        {
+            string[] NewLineStrings = null;
+            string PlayerName = null;
+            lock (State.sb)
+            {
+                NewLineStrings = State.sb.ToString().Split('\n');
+                State.sb.Clear();
+            }
+
+            if (NewLineStrings != null)
+            {
+                PlayerName = NewLineStrings[0]; 
+            }
+
+            lock(GameWorld)
+            {
+                Console.WriteLine("Player "+PlayerName + " has entered the game!");
+                //Make Player Cube
+            }
+           
 
         }
 
         /// <summary>
         /// Updates all aspects of the world.
         /// </summary>
-        public void Update()
+        static public void Update()
         {
 
         }

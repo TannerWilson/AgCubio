@@ -43,6 +43,11 @@ namespace Network_Controller
         public Delegate Callback;
 
         /// <summary>
+        /// Action used on the server side of connections
+        /// </summary>
+        public Action<PreservedState> ServerCallback;
+
+        /// <summary>
         /// Listener used for server listening
         /// </summary>
         TcpListener Listener;
@@ -142,7 +147,7 @@ namespace Network_Controller
             // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
 
-            lock(TheState.sb)
+            lock (TheState.sb)
             {
                 // Get number of bytes recieved and end the receive
                 int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
@@ -151,7 +156,9 @@ namespace Network_Controller
 
                 TheState.sb.Append(ConvertedString);
 
-                TheState.Callback.DynamicInvoke(TheState);
+                TheState.ServerCallback(TheState);
+
+                //TheState.Callback.DynamicInvoke(TheState);
             }
 
         }
@@ -207,51 +214,40 @@ namespace Network_Controller
         /// Upon a connection request coming in the OS should invoke the Accept_a_New_Client method 
         /// </summary>
         /// <param name="callback"></param>
-        public static void Server_Awaiting_Client_Loop(Delegate callback)
+        public static void Server_Awaiting_Client_Loop(Action<PreservedState> CallBack)
         {
-            // Set up OS listener
-            IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-            ipAddress.MapToIPv6();
-            TcpListener listener = null;
+
+
+            // Connect to server
+            IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+            IPAddress ipAddress = ipHostInfo.AddressList[0];
+            IPEndPoint clientep = new IPEndPoint(IPAddress.Any, 11000);
+
+            Socket ServerConnect;
+
+            // Create socket to connect
+            ServerConnect = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
             try
             {
-                listener = new TcpListener(ipAddress, 11000);
-                listener.Start();
-                Console.WriteLine("Awaiting connections...");
+                Console.WriteLine("Server has started!");
+
+
+                ServerConnect.Bind(clientep);
+
+                ServerConnect.Listen(10);
+
+                // Creat new state object, and start callback           
+                PreservedState State = new PreservedState(ServerConnect, null);
+                State.ServerCallback = CallBack;
+
+                ServerConnect.BeginAccept(Accept_a_New_Client, State);
             }
-            catch(Exception e) 
+            catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Connection faild.\n" + e.Message);
             }
 
-            /*
-            Not sure how to go about calling the AcceptNewCLient Function.
-            all examples I found just used one function
-             */
-            PreservedState State = new PreservedState(null, callback, listener);
-            Accept_a_New_Client(State);
-
-            // Start listening loop
-            while (true)
-            {
-                // Socket used in next connection
-                Socket client = listener.AcceptSocket();
-                Console.WriteLine("A player has connected.");
-
-                var childSocketThread = new Thread(() =>
-                {
-                    byte[] data = new byte[100];
-                    int size = client.Receive(data);
-                    Console.WriteLine("Recieved data: ");
-                    for (int i = 0; i < size; i++)
-                        Console.Write(Convert.ToChar(data[i]));
-
-                    Console.WriteLine();
-
-                    client.Close();
-                });
-                childSocketThread.Start();
-            }
         }
 
         /// <summary>
@@ -261,7 +257,27 @@ namespace Network_Controller
         /// <param name="ar"></param>
         public static void Accept_a_New_Client(IAsyncResult ar)
         {
+            try
+            {
+                // Pull state from result
+                PreservedState listener = (PreservedState)ar.AsyncState;
+                // New socket representing the client connection
+                Socket ClientSocket = listener.TheSocket.EndAccept(ar);
 
+                PreservedState ClientState = new PreservedState(ClientSocket, null);
+                ClientState.ServerCallback = listener.ServerCallback;
+
+                ClientState.ServerCallback(ClientState);
+
+
+                // Listener thread
+                listener.TheSocket.BeginAccept(Accept_a_New_Client, listener);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("An error occured.\n" + e.Message);
+            }
 
         }
 

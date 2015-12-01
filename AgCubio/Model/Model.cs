@@ -31,6 +31,25 @@ namespace Model
 
         private string PlayersName;
 
+        public int UIDCount = 0;
+
+        //*********************
+        // Default Values
+        //*********************
+        private int MaxSpeed;
+        private int MinSpeed;
+        private float AttritionRate;
+        private int FoodValue;
+        private float StartingMassValue;
+        private int MaxFood;
+        private float MinSplitMass;
+        private float MinSplitDistance;
+        private int MaxSplits;
+        private float AbsorbDistance;
+
+
+
+        
 
 
         /// <summary>
@@ -46,6 +65,29 @@ namespace Model
             FirstPlayer = true;
         }
 
+      
+        private int CreateUID()
+        {
+            UIDCount++;
+            return UIDCount;
+        }
+
+        private int CreateRandomARGBColor()
+        {
+            Random rand = new Random();
+            return rand.Next(-16000,16000);
+        }
+
+        private void GetRandomLocation()
+        {
+
+        }
+          
+
+        public void MakePlayer(string Name)
+        {
+            //Cube NewPlayerCube = new Cube(CreateUID(), Name, CreateRandomARGBColor, StartingMassValue, false,);
+        }
 
         /// <summary>
         /// Takes an input string, splits it at the '\n' character and 

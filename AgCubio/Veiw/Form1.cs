@@ -65,7 +65,7 @@ namespace View
                 if (State.sb.ToString() != "Could not connect!")
                 {
                     // Send player name
-                    Network.Send(State.TheSocket, NameTextBox.Text);
+                    Network.Send(State.TheSocket, NameTextBox.Text+"\n");
 
                     this.Invoke(new MethodInvoker(delegate
                     {
