@@ -68,9 +68,43 @@ namespace server
         /// Receives data from clients. Should be either (move,x,y) or (split,x,y). 
         /// </summary>
         /// <param name="request"></param>
-        static public void ClientData(string request)
+        static public void ClientData(PreservedState State)
         {
+            string[] SplitStrings = null;
+            string ActionRequest = null;
+            lock (State.sb)
+            {
+                SplitStrings = State.sb.ToString().Split('\n');
+                State.sb.Clear();
+            }
 
+            foreach(string Req in SplitStrings)
+            {
+                ActionRequest = Req;
+                ActionRequest = ActionRequest.TrimStart('(');
+                ActionRequest = ActionRequest.TrimEnd(')');
+
+                string[] RequestSplitString = ActionRequest.Split(',');
+
+                //Do Action
+                lock (GameWorld)
+                {
+                    if (RequestSplitString[0] != "")
+                    {
+                        int x, y;
+                        if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[1].ToString(), out y))
+                        {
+                            GameWorld.ActionCommand(RequestSplitString[0], x, y);
+                        }
+                        else
+                        {
+                            Console.WriteLine("WTF BRA");
+                        }
+                    }
+
+                }
+            }
+            Network.ServerWantsMoreData(State);
         }
 
         static void PlayerConnect(PreservedState State)
@@ -79,11 +113,17 @@ namespace server
             Network.ServerWantsMoreData(State);
         }
 
+        /// <summary>
+        /// Recieve the player name, create player cube and send player string.
+        /// </summary>
+        /// <param name="State"></param>
         static void GetPlayerName(PreservedState State)
         {
             string[] NewLineStrings = null;
             string PlayerName = null;
             string PlayerJsonString = null;
+
+            // Process recieved string
             lock (State.sb)
             {
                 NewLineStrings = State.sb.ToString().Split('\n');
@@ -95,6 +135,7 @@ namespace server
                 PlayerName = NewLineStrings[0];
             }
 
+            // Create player
             lock (GameWorld)
             {
                 Console.WriteLine("Player " + PlayerName + " has entered the game!");
@@ -102,16 +143,23 @@ namespace server
             }
 
 
-
+            // Send palyer
             Network.Send(State.TheSocket, PlayerJsonString + "\n");
-
+            // Send food data
             SendInitFoodData(State);
 
+            State.ServerCallback = ClientData;
+
+            Network.ServerWantsMoreData(State);
             
 
 
         }
 
+        /// <summary>
+        /// Send all food cubes as JSON strings
+        /// </summary>
+        /// <param name="State"></param>
         static void SendInitFoodData(PreservedState State)
         {
             lock (GameWorld)

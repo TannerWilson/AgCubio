@@ -232,7 +232,7 @@ namespace Network_Controller
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-                Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
+                
 
             }
             catch (Exception e)
@@ -264,15 +264,15 @@ namespace Network_Controller
             {
                 Console.WriteLine("Server has started!");
 
-
+                // Create "handshake"
                 ServerConnect.Bind(clientep);
-
                 ServerConnect.Listen(10);
 
                 // Creat new state object, and start callback           
                 PreservedState State = new PreservedState(ServerConnect, null);
                 State.ServerCallback = CallBack;
 
+                // Start connection
                 ServerConnect.BeginAccept(Accept_a_New_Client, State);
             }
             catch (Exception e)
@@ -310,8 +310,6 @@ namespace Network_Controller
             {
                 Console.WriteLine("An error occured.\n" + e.Message);
             }
-
         }
-
     }
 }

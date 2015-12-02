@@ -34,8 +34,8 @@ namespace Model
 
         private string PlayersName;
 
+        // Used to represent cube specific IDs
         public int UIDCount = 0;
-
         int TeamIDCount = 0;
 
         //*********************
@@ -52,9 +52,7 @@ namespace Model
         private int MaxSplits;
         private float AbsorbDistance;
 
-
-
-
+        public static  Random Rand;
 
 
         /// <summary>
@@ -68,55 +66,96 @@ namespace Model
             this.PlayerCubes = new Dictionary<string, Cube>();
             this.FoodCubes = new Dictionary<string, Cube>();
             FirstPlayer = true;
+            Rand = new Random();
         }
 
-
+        /// <summary>
+        /// Creates a unique UID for each cube
+        /// </summary>
+        /// <returns></returns>
         private int CreateUID()
         {
             UIDCount++;
             return UIDCount;
         }
+
+        /// <summary>
+        /// Makes a team ID for player cubes
+        /// </summary>
+        /// <returns></returns>
         private int CreateTeamID()
         {
             TeamIDCount++;
             return TeamIDCount;
         }
 
+        /// <summary>
+        /// Creates a random integer RGB value used to create colors.
+        /// </summary>
+        /// <returns></returns>
         private int CreateRandomARGBColor()
         {
             Random rand = new Random();
             return rand.Next(-1600, 1600);
-
-
         }
 
-
+        /// <summary>
+        /// Creates a random integer RGB value used to create colors.
+        /// </summary>
+        /// <returns></returns>
         private static int ToArgb()
         {
-            Random rand = new Random();
+ 
             int a = 255;
-            int r = rand.Next(0, 255);
-            int g = rand.Next(0, 255);
-            int b = rand.Next(0, 255);
+            int r = Rand.Next(0, 255);
+            int g = Rand.Next(0, 255);
+            int b = Rand.Next(0, 255);
 
             return a << 24 | r << 16 | g << 8 | b;
         }
 
+        /// <summary>
+        /// Generates a random location to place cubes on the screen
+        /// (Used by the server)
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
         private void GetRandomLocation(out int x, out int y)
         {
-            Random rand = new Random();
-            x = rand.Next(0, 1000);
-            y = rand.Next(0, 1000);
+            
+            x = Rand.Next(0, Width);
+            y = Rand.Next(0, Height);
         }
 
 
+        public void ActionCommand(string Action, int x, int y)
+        {
+            if(Action == "Move" || Action == "move")
+            {
+                Console.WriteLine("Move to "+ x +", " + y );
+            }
+            else if(Action == "Split" || Action == "split")
+            {
+                Console.WriteLine("Split to " + x + ", " + y);
+            }
+        }
+
+
+        /// <summary>
+        /// Creates the player cube (Used by server)
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <returns></returns>
         public string MakePlayer(string Name)
         {
-            int x, y;
-
+            // Find random location
+            int x, y;           
             GetRandomLocation(out x, out y);
 
+            // Create players cube
             Cube NewPlayerCube = new Cube(CreateUID().ToString(), Name, ToArgb(), StartingMassValue, false, 0, 0, CreateTeamID());
+
+            // Generate and return JSON string.
             ServerMakeCube(JsonConvert.SerializeObject(NewPlayerCube));
             return JsonConvert.SerializeObject(NewPlayerCube);
         }
@@ -154,10 +193,12 @@ namespace Model
                         DictionaryOfCubes[adding.GetUID()] = adding;
                 }
             }
-
-
         }
 
+        /// <summary>
+        /// Creates and adds given cube "input" to our dictionary of cubes
+        /// </summary>
+        /// <param name="input"></param>
         public void ServerMakeCube(string input)
         {
             Cube adding = JsonConvert.DeserializeObject<Cube>(input);
@@ -168,6 +209,9 @@ namespace Model
                 DictionaryOfCubes[adding.GetUID()] = adding;
         }
 
+        /// <summary>
+        /// Creates food cubes until the max food count is reached.
+        /// </summary>
         public void CreateFood()
         {
             int CurrentFoodCount = FoodCubes.Count;
