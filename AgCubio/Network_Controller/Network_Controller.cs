@@ -52,6 +52,7 @@ namespace Network_Controller
         /// </summary>
         TcpListener Listener;
 
+        public string Name;
         /// <summary>
         /// Constructs a state object
         /// </summary>
@@ -166,17 +167,22 @@ namespace Network_Controller
         {
             // Get the state back from prameter
             PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+            try {
+                lock (TheState.sb)
+                {
+                    // Get number of bytes recieved and end the receive
+                    int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
 
-            lock (TheState.sb)
+                    string ConvertedString = encoding.GetString(TheState.Buffer);
+
+                    TheState.sb.Append(ConvertedString);
+
+                    TheState.ServerCallback(TheState);
+                }
+            }
+            catch(Exception e)
             {
-                // Get number of bytes recieved and end the receive
-                int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
-
-                string ConvertedString = encoding.GetString(TheState.Buffer);
-
-                TheState.sb.Append(ConvertedString);
-
-                TheState.ServerCallback(TheState);
+                Console.WriteLine("Server Receive ERROR : " + e.Message);
             }
 
         }
@@ -208,13 +214,19 @@ namespace Network_Controller
         /// <param name="data"></param>
         public static void Send(Socket socket, String data)
         {
-            lock(socket)
-            {
-                byte[] byteData = encoding.GetBytes(data);
+            try {
+                lock (socket)
+                {
+                    byte[] byteData = encoding.GetBytes(data);
 
-                // Begin sending the data to the remote device.
-                socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
-                
+                    // Begin sending the data to the remote device.
+                    socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
+                   
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("SEND ERROR: " + e.Message);
             }
         }
 
@@ -232,12 +244,12 @@ namespace Network_Controller
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-                
+                //Console.WriteLine("Bytes Sent " + bytesSent.ToString());
 
             }
             catch (Exception e)
             {
-                Console.WriteLine("ERROR: "+ e.Message);
+                Console.WriteLine("Semd Callback ERROR: "+ e.Message);
             }
         }
 

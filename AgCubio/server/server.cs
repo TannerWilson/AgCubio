@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Network_Controller;
 using View;
 using Newtonsoft.Json;
+using System.Timers;
+using System.Net.Sockets;
 
 namespace server
 {
@@ -18,6 +20,10 @@ namespace server
 
         static private int TickRate;
 
+        static Timer timer;
+
+        // Clients connected to the game
+        static Dictionary<string, ClientState> Clients;
 
         static void Main(string[] args)
         {
@@ -32,12 +38,21 @@ namespace server
         /// </summary>
         static public void start()
         {
+            // Create world
             GameWorld = new World(1000, 1000);
             Network.Server_Awaiting_Client_Loop(PlayerConnect);
 
+            // Set up and start timer
+            timer = new Timer(33);
+            timer.Elapsed += new ElapsedEventHandler(Update);
+            timer.Enabled = true;
+
+            Clients = new Dictionary<string, ClientState>();
+
+            // Create initial food
             lock (GameWorld)
             {
-                GameWorld.CreateFood();
+                GameWorld.CreateInitFood();
             }
 
             Console.Read();
@@ -72,13 +87,14 @@ namespace server
         {
             string[] SplitStrings = null;
             string ActionRequest = null;
+            // Process data recieved
             lock (State.sb)
             {
                 SplitStrings = State.sb.ToString().Split('\n');
                 State.sb.Clear();
             }
-
-            foreach(string Req in SplitStrings)
+            // Loop throgh each request
+            foreach (string Req in SplitStrings)
             {
                 ActionRequest = Req;
                 ActionRequest = ActionRequest.TrimStart('(');
@@ -89,21 +105,28 @@ namespace server
                 //Do Action
                 lock (GameWorld)
                 {
+                    // Ensure the request is not empty
                     if (RequestSplitString[0] != "")
                     {
+                        // Ensure request is formatted correctly
                         int x, y;
                         if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[1].ToString(), out y))
                         {
-                            GameWorld.ActionCommand(RequestSplitString[0], x, y);
+                            ClientState PlayerState = Clients[State.Name];
+                            foreach (string UID in PlayerState.UID)
+                            {
+                                GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
+                            }
+
                         }
                         else
                         {
-                            Console.WriteLine("WTF BRA");
+                            Console.WriteLine("Inalid request recieved.");
                         }
                     }
-
                 }
             }
+            // Ask for more data after processing all previous requests
             Network.ServerWantsMoreData(State);
         }
 
@@ -141,6 +164,21 @@ namespace server
                 Console.WriteLine("Player " + PlayerName + " has entered the game!");
                 PlayerJsonString = GameWorld.MakePlayer(PlayerName);
             }
+            lock (Clients)
+            {
+                Cube PlayerCube = JsonConvert.DeserializeObject<Cube>(PlayerJsonString);
+
+                HashSet<string> NewPlayerHash = new HashSet<string>();
+                NewPlayerHash.Add(PlayerCube.GetUID());
+
+                ClientState NewClient = new ClientState(State.TheSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
+                Clients.Add(PlayerName, NewClient);
+            }
+
+            lock (State)
+            {
+                State.Name = PlayerName;
+            }
 
 
             // Send palyer
@@ -151,7 +189,7 @@ namespace server
             State.ServerCallback = ClientData;
 
             Network.ServerWantsMoreData(State);
-            
+
 
 
         }
@@ -166,7 +204,7 @@ namespace server
             {
                 foreach (Cube FoodItem in GameWorld.FoodCubes.Values)
                 {
-                    Network.Send(State.TheSocket, JsonConvert.SerializeObject(FoodItem)+"\n");
+                    Network.Send(State.TheSocket, JsonConvert.SerializeObject(FoodItem) + "\n");
                 }
             }
         }
@@ -174,9 +212,55 @@ namespace server
         /// <summary>
         /// Updates all aspects of the world.
         /// </summary>
-        static public void Update()
+        static public void Update(object source, ElapsedEventArgs e)
         {
+           
+                List<string> UpdatedCubes = new List<string>();
+                // Creat new food cube and send to each client
+                string FoodCube = GameWorld.GenerateNewFood();
+                foreach (ClientState state in Clients.Values)
+                {
+                    if (FoodCube != null)
+                        Network.Send(state.Socket, FoodCube);
+                }
 
+
+                foreach (Cube CubeItem in GameWorld.DictionaryOfCubes.Values)
+                {
+                    string UpdatedJsonCube = CubeItem.Update();
+
+                    if (UpdatedJsonCube != null)
+                    {
+                        UpdatedCubes.Add(UpdatedJsonCube);
+                    }
+                }
+
+                foreach (ClientState state in Clients.Values)
+                {
+                    foreach (string UpdatedCubeItem in UpdatedCubes)
+                    {
+                        ///Console.WriteLine("Sending DATA");
+                        Network.Send(state.Socket, UpdatedCubeItem);
+                    }
+                }
+            
+
+        }
+
+        protected class ClientState
+        {
+            public Socket Socket;
+            public string Name;
+            public HashSet<string> UID;
+            public int TeamID;
+
+            public ClientState(Socket _socket, string _name, HashSet<string> uid, int team)
+            {
+                Socket = _socket;
+                Name = _name;
+                UID = uid;
+                TeamID = team;
+            }
         }
     }
 }

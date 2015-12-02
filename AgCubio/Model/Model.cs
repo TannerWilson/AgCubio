@@ -43,10 +43,10 @@ namespace Model
         //*********************
         private int MaxSpeed;
         private int MinSpeed;
-        private float AttritionRate;
+        
         private int FoodValue;
         private float StartingMassValue = 1000;
-        private int MaxFood = 5000;
+        private int MaxFood = 10;
         private float MinSplitMass;
         private float MinSplitDistance;
         private int MaxSplits;
@@ -127,12 +127,14 @@ namespace Model
             y = Rand.Next(0, Height);
         }
 
-
-        public void ActionCommand(string Action, int x, int y)
+        /// <summary>
+        /// Process client requests
+        /// </summary>
+        public void ActionCommand(string Action, int x, int y, string UID)
         {
             if(Action == "Move" || Action == "move")
             {
-                Console.WriteLine("Move to "+ x +", " + y );
+                DictionaryOfCubes[UID].SetNewPosition(x, y);
             }
             else if(Action == "Split" || Action == "split")
             {
@@ -210,9 +212,9 @@ namespace Model
         }
 
         /// <summary>
-        /// Creates food cubes until the max food count is reached.
+        /// Creates Initial food cubes until the max food count is reached.
         /// </summary>
-        public void CreateFood()
+        public void CreateInitFood()
         {
             int CurrentFoodCount = FoodCubes.Count;
 
@@ -225,6 +227,28 @@ namespace Model
 
                 FoodCubes.Add(NewFoodCube.GetUID(), NewFoodCube);
             }
+        }
+
+        /// <summary>
+        /// Generates single food to update world
+        /// </summary>
+        /// <returns></returns>
+        public string GenerateNewFood()
+        {
+            int CurrentFoodCount = FoodCubes.Count;
+            // Generate food if max food isnt yet reached
+            if (CurrentFoodCount != MaxFood)
+            {
+                int x, y;
+                GetRandomLocation(out x, out y);
+
+                Cube NewFoodCube = new Cube(CreateUID().ToString(), "", ToArgb(), 1, true, x, y, -1);
+                FoodCubes.Add(NewFoodCube.GetUID(), NewFoodCube);
+
+                return JsonConvert.SerializeObject(NewFoodCube) + '\n';
+            }
+
+             return null;
         }
     }
 
@@ -257,6 +281,15 @@ namespace Model
         [JsonProperty]
         public float Y;
 
+        public float Speed;
+
+        float NewX;
+        float NewY;
+
+        private float AttritionRate;
+
+        public bool Changed;
+
         [JsonProperty]
         public int team_id;
         /// <summary>
@@ -273,6 +306,9 @@ namespace Model
             this.X = loc_x;
             this.Y = loc_y;
             this.team_id = Team_id;
+
+            Speed = 10;
+            Changed = false;
         }
 
         /// <summary>
@@ -325,6 +361,75 @@ namespace Model
         {
             return Y + (double)this.getWidth();
         }
+
+        /// <summary>
+        /// Update cube loaction and size and collition data
+        /// </summary>
+        public string Update()
+        {
+            // Shrink the cube based on its attrition rate
+            Shrink();
+
+            if (NewX != null && NewY != null)
+                Move(NewX, NewY);
+            // If the cube changed, return JSON string
+            if (Changed)
+            {
+                return JsonConvert.SerializeObject(this)+'\n';
+                Changed = false;
+            }
+            else
+                return null;
+
+            
+        }
+
+        public void Move(float x, float y)
+        {
+            if (this.X < x)
+            {
+                this.X += 1 * Speed;
+                Changed = true;
+            }
+            else if (this.X > x)
+            {
+                this.X -= 1 * Speed;
+                Changed = true;
+            }
+
+            if (this.Y < y)
+            {
+                this.Y += 1 * Speed;
+                Changed = true;
+            }
+            else if (this.Y > y)
+            {
+                this.Y -= 1 * Speed;
+                Changed = true;
+            }         
+        }
+
+        /// <summary>
+        /// Shrinks the cube
+        /// </summary>
+        public void Shrink()
+        {
+            if(Mass < 200)
+                AttritionRate = 0;
+            else if (Mass > 200 && Mass < 800)
+                AttritionRate = 0.5f;
+            else if (Mass > 200)
+                AttritionRate = 1;
+
+            this.Mass -= AttritionRate;
+        }
+
+        public void SetNewPosition(float x, float y)
+        {
+            this.NewX = x;
+            this.NewY = y;
+        }
+
     }
 }
 
