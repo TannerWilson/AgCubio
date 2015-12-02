@@ -156,9 +156,27 @@ namespace Network_Controller
 
                 TheState.sb.Append(ConvertedString);
 
-                TheState.ServerCallback(TheState);
+                TheState.Callback.DynamicInvoke(TheState);
+            }
 
-                //TheState.Callback.DynamicInvoke(TheState);
+        }
+
+
+        public static void ServerReceiveCallback(IAsyncResult state_in_an_ar_object)
+        {
+            // Get the state back from prameter
+            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
+
+            lock (TheState.sb)
+            {
+                // Get number of bytes recieved and end the receive
+                int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
+
+                string ConvertedString = encoding.GetString(TheState.Buffer);
+
+                TheState.sb.Append(ConvertedString);
+
+                TheState.ServerCallback(TheState);
             }
 
         }
@@ -172,6 +190,16 @@ namespace Network_Controller
             state.TheSocket.BeginReceive(state.Buffer, 0, state.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), state);
         }
 
+
+        /// <summary>
+        /// Helper function that the client View code will call whenever it wants more data.
+        /// Note: the client will probably want more data every time it gets data
+        /// </summary>
+        public static void ServerWantsMoreData(PreservedState state)
+        {
+            state.TheSocket.BeginReceive(state.Buffer, 0, state.MAXBUFFERSIZE, 0, new AsyncCallback(ServerReceiveCallback), state);
+        }
+
         /// <summary>
         /// This function will allow a program to send data over a socket. 
         /// This function converts the data into bytes and then sends them using socket.BeginSend.
@@ -180,10 +208,14 @@ namespace Network_Controller
         /// <param name="data"></param>
         public static void Send(Socket socket, String data)
         {
-            byte[] byteData = encoding.GetBytes(data);
+            lock(socket)
+            {
+                byte[] byteData = encoding.GetBytes(data);
 
-            // Begin sending the data to the remote device.
-            socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
+                // Begin sending the data to the remote device.
+                socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
+                
+            }
         }
 
         /// <summary>
@@ -200,12 +232,12 @@ namespace Network_Controller
 
                 // Complete sending the data to the remote device.
                 int bytesSent = client.EndSend(ar);
-                // Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
+                Debug.WriteLine("Sent {0} bytes to server.", bytesSent);
 
             }
             catch (Exception e)
             {
-                throw e;
+                Console.WriteLine("ERROR: "+ e.Message);
             }
         }
 

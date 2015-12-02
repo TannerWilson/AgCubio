@@ -27,11 +27,16 @@ namespace Model
         // Stored all cubes controlled by the player
         public Dictionary<string, Cube> PlayerCubes;
 
+        // Stored all cubes controlled by the player
+        public Dictionary<string, Cube> FoodCubes;
+
         private bool FirstPlayer;
 
         private string PlayersName;
 
         public int UIDCount = 0;
+
+        int TeamIDCount = 0;
 
         //*********************
         // Default Values
@@ -40,8 +45,8 @@ namespace Model
         private int MinSpeed;
         private float AttritionRate;
         private int FoodValue;
-        private float StartingMassValue;
-        private int MaxFood;
+        private float StartingMassValue = 1000;
+        private int MaxFood = 5000;
         private float MinSplitMass;
         private float MinSplitDistance;
         private int MaxSplits;
@@ -49,7 +54,7 @@ namespace Model
 
 
 
-        
+
 
 
         /// <summary>
@@ -61,32 +66,59 @@ namespace Model
             this.Width = width;
             this.DictionaryOfCubes = new Dictionary<string, Cube>();
             this.PlayerCubes = new Dictionary<string, Cube>();
-
+            this.FoodCubes = new Dictionary<string, Cube>();
             FirstPlayer = true;
         }
 
-      
+
         private int CreateUID()
         {
             UIDCount++;
             return UIDCount;
         }
+        private int CreateTeamID()
+        {
+            TeamIDCount++;
+            return TeamIDCount;
+        }
 
         private int CreateRandomARGBColor()
         {
             Random rand = new Random();
-            return rand.Next(-16000,16000);
-        }
+            return rand.Next(-1600, 1600);
 
-        private void GetRandomLocation()
-        {
 
         }
-          
 
-        public void MakePlayer(string Name)
+
+        private static int ToArgb()
         {
-            //Cube NewPlayerCube = new Cube(CreateUID(), Name, CreateRandomARGBColor, StartingMassValue, false,);
+            Random rand = new Random();
+            int a = 255;
+            int r = rand.Next(0, 255);
+            int g = rand.Next(0, 255);
+            int b = rand.Next(0, 255);
+
+            return a << 24 | r << 16 | g << 8 | b;
+        }
+
+        private void GetRandomLocation(out int x, out int y)
+        {
+            Random rand = new Random();
+            x = rand.Next(0, 1000);
+            y = rand.Next(0, 1000);
+        }
+
+
+        public string MakePlayer(string Name)
+        {
+            int x, y;
+
+            GetRandomLocation(out x, out y);
+
+            Cube NewPlayerCube = new Cube(CreateUID().ToString(), Name, ToArgb(), StartingMassValue, false, 0, 0, CreateTeamID());
+            ServerMakeCube(JsonConvert.SerializeObject(NewPlayerCube));
+            return JsonConvert.SerializeObject(NewPlayerCube);
         }
 
         /// <summary>
@@ -97,7 +129,7 @@ namespace Model
         {
             Cube adding = JsonConvert.DeserializeObject<Cube>(input);
 
-            // Add first entry to player dictionary
+            //Add first entry to player dictionary
             if (FirstPlayer)
             {
                 PlayerCubes.Add(adding.GetUID(), adding);
@@ -121,6 +153,33 @@ namespace Model
                     else
                         DictionaryOfCubes[adding.GetUID()] = adding;
                 }
+            }
+
+
+        }
+
+        public void ServerMakeCube(string input)
+        {
+            Cube adding = JsonConvert.DeserializeObject<Cube>(input);
+
+            if (adding.Mass == 0)
+                DictionaryOfCubes.Remove(adding.GetUID());
+            else
+                DictionaryOfCubes[adding.GetUID()] = adding;
+        }
+
+        public void CreateFood()
+        {
+            int CurrentFoodCount = FoodCubes.Count;
+
+            for (int i = 0; i < MaxFood - CurrentFoodCount; i++)
+            {
+                int x, y;
+                GetRandomLocation(out x, out y);
+
+                Cube NewFoodCube = new Cube(CreateUID().ToString(), "", ToArgb(), 1, true, x, y, -1);
+
+                FoodCubes.Add(NewFoodCube.GetUID(), NewFoodCube);
             }
         }
     }

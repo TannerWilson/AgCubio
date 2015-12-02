@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Network_Controller;
 using View;
+using Newtonsoft.Json;
 
 namespace server
 {
@@ -33,6 +34,12 @@ namespace server
         {
             GameWorld = new World(1000, 1000);
             Network.Server_Awaiting_Client_Loop(PlayerConnect);
+
+            lock (GameWorld)
+            {
+                GameWorld.CreateFood();
+            }
+
             Console.Read();
         }
 
@@ -69,13 +76,14 @@ namespace server
         static void PlayerConnect(PreservedState State)
         {
             State.ServerCallback = GetPlayerName;
-            Network.i_want_more_data(State);
+            Network.ServerWantsMoreData(State);
         }
 
         static void GetPlayerName(PreservedState State)
         {
             string[] NewLineStrings = null;
             string PlayerName = null;
+            string PlayerJsonString = null;
             lock (State.sb)
             {
                 NewLineStrings = State.sb.ToString().Split('\n');
@@ -84,16 +92,35 @@ namespace server
 
             if (NewLineStrings != null)
             {
-                PlayerName = NewLineStrings[0]; 
+                PlayerName = NewLineStrings[0];
             }
 
-            lock(GameWorld)
+            lock (GameWorld)
             {
-                Console.WriteLine("Player "+PlayerName + " has entered the game!");
-                //Make Player Cube
+                Console.WriteLine("Player " + PlayerName + " has entered the game!");
+                PlayerJsonString = GameWorld.MakePlayer(PlayerName);
             }
-           
 
+
+
+            Network.Send(State.TheSocket, PlayerJsonString + "\n");
+
+            SendInitFoodData(State);
+
+            
+
+
+        }
+
+        static void SendInitFoodData(PreservedState State)
+        {
+            lock (GameWorld)
+            {
+                foreach (Cube FoodItem in GameWorld.FoodCubes.Values)
+                {
+                    Network.Send(State.TheSocket, JsonConvert.SerializeObject(FoodItem)+"\n");
+                }
+            }
         }
 
         /// <summary>

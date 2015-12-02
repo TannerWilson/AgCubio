@@ -295,6 +295,7 @@ namespace View
         /// <param name="e"></param>
         private void AdCubioForm_MouseMove(object sender, MouseEventArgs e)
         {
+            
             // Record the curent mouse location
             Mousex = e.X;
             Mousey = e.Y;
