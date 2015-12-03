@@ -1,0 +1,5 @@
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\bin\Debug\Network_Controller.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\bin\Debug\Network_Controller.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.csprojResolveAssemblyReference.cache
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.pdb

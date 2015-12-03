@@ -1,22 +1,22 @@
-﻿using Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Network_Controller;
-using View;
+using Model;
 using Newtonsoft.Json;
+using Network_Controller;
 using System.Timers;
 using System.Net.Sockets;
 
-namespace server
+namespace Server
 {
     class Server
     {
+
         static private World GameWorld;
 
-        static HashSet<PreservedState> States;
+        static HashSet<StateObject> States;
 
         static private int TickRate;
 
@@ -27,9 +27,7 @@ namespace server
 
         static void Main(string[] args)
         {
-
             start();
-
         }
 
         /// <summary>
@@ -59,88 +57,10 @@ namespace server
         }
 
         /// <summary>
-        /// Sets up a callback to receive a players name and then request more data from the connection
-        /// </summary>
-        static public void ClientConnection()
-        {
-
-        }
-
-        /// <summary>
-        /// Creates the new player cube (and updates the world about it) 
-        /// and stores away all the necessary data for the connection to be used for further communication. 
-        /// Also sets up the callback for  handling move/split requests and request new data from 
-        /// the socket. Finally it should send the current state of the world to the player.
-        /// </summary>
-        /// <returns></returns>
-        static public Cube ReceivePalyer(string name)
-        {
-            Cube Player = null;
-            return Player;
-        }
-
-        /// <summary>
-        /// Receives data from clients. Should be either (move,x,y) or (split,x,y). 
-        /// </summary>
-        /// <param name="request"></param>
-        static public void ClientData(PreservedState State)
-        {
-            string[] SplitStrings = null;
-            string ActionRequest = null;
-            // Process data recieved
-            lock (State.sb)
-            {
-                SplitStrings = State.sb.ToString().Split('\n');
-                State.sb.Clear();
-            }
-            // Loop throgh each request
-            foreach (string Req in SplitStrings)
-            {
-                ActionRequest = Req;
-                ActionRequest = ActionRequest.TrimStart('(');
-                ActionRequest = ActionRequest.TrimEnd(')');
-
-                string[] RequestSplitString = ActionRequest.Split(',');
-
-                //Do Action
-                lock (GameWorld)
-                {
-                    // Ensure the request is not empty
-                    if (RequestSplitString[0] != "")
-                    {
-                        // Ensure request is formatted correctly
-                        int x, y;
-                        if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[1].ToString(), out y))
-                        {
-                            ClientState PlayerState = Clients[State.Name];
-                            foreach (string UID in PlayerState.UID)
-                            {
-                                GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
-                            }
-
-                        }
-                        else
-                        {
-                            Console.WriteLine("Inalid request recieved.");
-                        }
-                    }
-                }
-            }
-            // Ask for more data after processing all previous requests
-            Network.ServerWantsMoreData(State);
-        }
-
-        static void PlayerConnect(PreservedState State)
-        {
-            State.ServerCallback = GetPlayerName;
-            Network.ServerWantsMoreData(State);
-        }
-
-        /// <summary>
         /// Recieve the player name, create player cube and send player string.
         /// </summary>
         /// <param name="State"></param>
-        static void GetPlayerName(PreservedState State)
+        static void GetPlayerName(StateObject State)
         {
             string[] NewLineStrings = null;
             string PlayerName = null;
@@ -169,44 +89,100 @@ namespace server
                 Cube PlayerCube = JsonConvert.DeserializeObject<Cube>(PlayerJsonString);
 
                 HashSet<string> NewPlayerHash = new HashSet<string>();
-                NewPlayerHash.Add(PlayerCube.GetUID());
+                NewPlayerHash.Add(PlayerCube.uid);
 
-                ClientState NewClient = new ClientState(State.TheSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
+                ClientState NewClient = new ClientState(State.workSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
                 Clients.Add(PlayerName, NewClient);
             }
 
             lock (State)
             {
                 State.Name = PlayerName;
+                State.ServerCallback = ClientData;
             }
 
 
             // Send palyer
-            Network.Send(State.TheSocket, PlayerJsonString + "\n");
+            Network.Send(State.workSocket, PlayerJsonString + "\n");
             // Send food data
-            SendInitFoodData(State);
-
-            State.ServerCallback = ClientData;
-
-            Network.ServerWantsMoreData(State);
+            //SendInitFoodData(State);
 
 
 
+            Network.GetData(State);
+        }
+        /// <summary>
+        /// Receives data from clients. Should be either (move,x,y) or (split,x,y). 
+        /// </summary>
+        /// <param name="request"></param>
+        static public void ClientData(StateObject State)
+        {
+            lock (State)
+            {
+                string[] SplitStrings = null;
+                string ActionRequest = null;
+                // Process data recieved
+                lock (State.sb)
+                {
+                    SplitStrings = State.sb.ToString().Split('\n');
+                    State.sb.Clear();
+
+                    // Loop throgh each request
+                    foreach (string Req in SplitStrings)
+                    {
+                        ActionRequest = Req;
+                        ActionRequest = ActionRequest.TrimStart('(');
+                        ActionRequest = ActionRequest.TrimEnd(')');
+
+                        string[] RequestSplitString = ActionRequest.Split(',');
+
+                        //Do Action
+                        lock (GameWorld)
+                        {
+
+                            if (RequestSplitString.Length == 3)
+                            {
+
+                                // Ensure the request is not empty
+                                if (RequestSplitString[0] != "" && !RequestSplitString[0].StartsWith("/0/0/0"))
+                                {
+                                    // Ensure request is formatted correctly
+                                    int x, y;
+                                    if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[1].ToString(), out y))
+                                    {
+
+                                        ClientState PlayerState = Clients[State.Name];
+
+
+                                        foreach (string UID in PlayerState.UID)
+                                        {
+                                            GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
+                                            Console.WriteLine(x +", " + y);
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Inalid request recieved.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                State.sb.Append(Req);
+                            }
+                        }
+                    }
+                }
+                // Ask for more data after processing all previous requests
+                Network.GetData(State);
+            }
         }
 
-        /// <summary>
-        /// Send all food cubes as JSON strings
-        /// </summary>
-        /// <param name="State"></param>
-        static void SendInitFoodData(PreservedState State)
+        static void PlayerConnect(StateObject State)
         {
-            lock (GameWorld)
-            {
-                foreach (Cube FoodItem in GameWorld.FoodCubes.Values)
-                {
-                    Network.Send(State.TheSocket, JsonConvert.SerializeObject(FoodItem) + "\n");
-                }
-            }
+            State.ServerCallback = GetPlayerName;
+            Network.GetData(State);
         }
 
         /// <summary>
@@ -214,7 +190,9 @@ namespace server
         /// </summary>
         static public void Update(object source, ElapsedEventArgs e)
         {
-           
+            lock (GameWorld)
+            {
+
                 List<string> UpdatedCubes = new List<string>();
                 // Creat new food cube and send to each client
                 string FoodCube = GameWorld.GenerateNewFood();
@@ -243,9 +221,12 @@ namespace server
                         Network.Send(state.Socket, UpdatedCubeItem);
                     }
                 }
-            
+            }
+
 
         }
+
+
 
         protected class ClientState
         {

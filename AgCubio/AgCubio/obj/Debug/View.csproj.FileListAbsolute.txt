@@ -1,0 +1,16 @@
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\View.csprojResolveAssemblyReference.cache
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.Properties.Resources.resources
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\View.csproj.GenerateResource.Cache
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\AgCubio.exe.config
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\AgCubio.exe
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\AgCubio.pdb
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Model.dll
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Network_Controller.dll
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Resources.exe
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Model.pdb
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Network_Controller.pdb
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Resources.pdb
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.exe
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.pdb
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.AgCubioForm.resources
+c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Newtonsoft.Json.dll

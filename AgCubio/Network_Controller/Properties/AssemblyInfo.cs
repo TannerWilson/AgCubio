@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Network_Controller")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("College of Engineering")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Network_Controller")]
-[assembly: AssemblyCopyright("Copyright © College of Engineering 2015")]
+[assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("f2f7f03d-7fe0-487f-89e5-79938b925b5e")]
+[assembly: Guid("32ad05b3-5012-4dde-9cea-7e17a9faabc4")]
 
 // Version information for an assembly consists of the following four values:
 //

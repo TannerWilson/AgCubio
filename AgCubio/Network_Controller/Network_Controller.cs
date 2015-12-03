@@ -1,256 +1,174 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
-using Model;
-using System.Threading;
 
 namespace Network_Controller
 {
-    /// <summary>
-    /// Object used to represent the current state of the world.
-    /// Used to "know" what to do when information comes in form the server.
-    /// </summary>
-    public class PreservedState
+
+    public class StateObject
     {
-        /// <summary>
-        /// Socket used by the state object
-        /// </summary>
-        public Socket TheSocket;
+        // Client socket.
+        public Socket workSocket = null;
+        // Size of receive buffer.
+        public const int BufferSize = 256;
+        // Receive buffer.
+        public byte[] buffer = new byte[BufferSize];
+        // Received data string.
+        public StringBuilder sb = new StringBuilder();
 
-        /// <summary>
-        /// Maximum buffer size
-        /// </summary>
-        public readonly int MAXBUFFERSIZE = 1024;
-
-        /// <summary>
-        /// Buffer array used in socket
-        /// </summary>
-        public byte[] Buffer = new byte[1024];
-
-        /// <summary>
-        /// String builder used for socked building
-        /// </summary>
-        public StringBuilder sb;
-
-        /// <summary>
-        /// Stores what function to call when a connection is made
-        /// </summary>
-        public Delegate Callback;
+        public string Name;
 
         /// <summary>
         /// Action used on the server side of connections
         /// </summary>
-        public Action<PreservedState> ServerCallback;
-
-        /// <summary>
-        /// Listener used for server listening
-        /// </summary>
-        TcpListener Listener;
-
-        public string Name;
-        /// <summary>
-        /// Constructs a state object
-        /// </summary>
-        public PreservedState(Socket NewSocket, Delegate Receive)
-        {
-            TheSocket = NewSocket;
-            sb = new StringBuilder();
-
-            Callback = Receive;
-            Listener = null;
-        }
-
-        /// <summary>
-        /// Constructs a state object
-        /// </summary>
-        public PreservedState(Socket NewSocket, Delegate Receive, TcpListener listener)
-        {
-            TheSocket = NewSocket;
-            sb = new StringBuilder();
-
-            Callback = Receive;
-            Listener = listener;
-        }
+        public Action<StateObject> ServerCallback;
 
     }
 
-    /// <summary>
-    /// Generic class used to establish socket connections to a server
-    /// </summary>
     public static class Network
     {
-        // Encoding used in networking
-        private static System.Text.UTF8Encoding encoding = new System.Text.UTF8Encoding();
-        // Threading lock
-        private static Object Lock = new Object();
-
-        /// <summary>
-        /// This function attempts to connect to the server via a provided hostname. 
-        /// It saves the callback function (in a state object) for use when data arrives.
-        /// </summary>
-        /// <param name="callback"> A function inside the View to be called when a connection is made </param>
-        /// <param name="hostname"> The name of the server to connect to </param>
-        public static Socket Connect_to_Server(Delegate callback, string hostname)
+        public static void ConnectToServer(Action<StateObject> Callback, string Hostname)
         {
-            Socket socket = null;
-            // Connect to server
-            IPHostEntry ipHostInfo = Dns.Resolve(hostname);
+            IPHostEntry ipHostInfo = Dns.Resolve(Hostname);
             IPAddress ipAddress = ipHostInfo.AddressList[0];
-            IPEndPoint hostep = new IPEndPoint(ipAddress, 11000);
-            // Create socket to connect
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            // Make new game state
-            PreservedState NewPreserved = new PreservedState(socket, callback);
+            IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
 
-            socket.BeginConnect(hostep, new AsyncCallback(Connected_to_Server), NewPreserved);
-            return socket;
+            // Create a TCP/IP socket.
+            Socket client = new Socket(AddressFamily.InterNetwork,
+                SocketType.Stream, ProtocolType.Tcp);
+
+            StateObject NewStateObject = new StateObject();
+            NewStateObject.ServerCallback = Callback;
+            NewStateObject.workSocket = client;
+
+            client.BeginConnect(remoteEP, ConnectCallback, NewStateObject);
+
+
         }
 
-        /// <summary>
-        /// Connects to the cerver
-        /// </summary>
-        /// <param name="state_in_an_ar_object"></param>
-        public static void Connected_to_Server(IAsyncResult state_in_an_ar_object)
+        private static void ConnectCallback(IAsyncResult ar)
         {
-            // Grab state object from param
-            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
             try
             {
+                // Retrieve the socket from the state object.
+                StateObject State = (StateObject)ar.AsyncState;
+                Socket client = State.workSocket;
 
-                // End the connection
-                TheState.TheSocket.EndConnect(state_in_an_ar_object);
+                // Complete the connection.
+                client.EndConnect(ar);
 
-                TheState.Callback.DynamicInvoke(TheState);
-                // Start receiving state
-                TheState.TheSocket.BeginReceive(TheState.Buffer, 0, TheState.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), TheState);
+                // We connected now notify!
+                State.ServerCallback(State);
+
+                
+
+
             }
             catch (Exception e)
             {
-                TheState.sb.Append("Could not connect!");
-                TheState.Callback.DynamicInvoke(TheState);
+                Debug.WriteLine(e.ToString());
             }
-
         }
 
-        /// <summary>
-        /// This method should check to see how much data has arrived. If 0, 
-        /// the connection has been closed (presumably by the server). On greater than zero data, 
-        /// this method should call the callback function provided above
-        /// </summary>
-        /// <param name="state_in_an_ar_object"></param>
-        public static void ReceiveCallback(IAsyncResult state_in_an_ar_object)
+        public static void Send(Socket client, String data)
         {
-            // Get the state back from prameter
-            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-
-            lock (TheState.sb)
+            lock (client)
             {
-                // Get number of bytes recieved and end the receive
-                int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
+                // Convert the string data to byte data using ASCII encoding.
+                byte[] byteData = Encoding.UTF8.GetBytes(data);
 
-                string ConvertedString = encoding.GetString(TheState.Buffer);
-
-                TheState.sb.Append(ConvertedString);
-
-                TheState.Callback.DynamicInvoke(TheState);
+                // Begin sending the data to the remote device.
+                client.BeginSend(byteData, 0, byteData.Length, 0,
+                    new AsyncCallback(SendCallback), client);
             }
 
         }
 
-
-        public static void ServerReceiveCallback(IAsyncResult state_in_an_ar_object)
+        private static void SendCallback(IAsyncResult ar)
         {
-            // Get the state back from prameter
-            PreservedState TheState = (PreservedState)state_in_an_ar_object.AsyncState;
-            try {
-                lock (TheState.sb)
-                {
-                    // Get number of bytes recieved and end the receive
-                    int BytesRead = TheState.TheSocket.EndReceive(state_in_an_ar_object);
 
-                    string ConvertedString = encoding.GetString(TheState.Buffer);
-
-                    TheState.sb.Append(ConvertedString);
-
-                    TheState.ServerCallback(TheState);
-                }
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("Server Receive ERROR : " + e.Message);
-            }
-
-        }
-
-        /// <summary>
-        /// Helper function that the client View code will call whenever it wants more data.
-        /// Note: the client will probably want more data every time it gets data
-        /// </summary>
-        public static void i_want_more_data(PreservedState state)
-        {
-            state.TheSocket.BeginReceive(state.Buffer, 0, state.MAXBUFFERSIZE, 0, new AsyncCallback(ReceiveCallback), state);
-        }
-
-
-        /// <summary>
-        /// Helper function that the client View code will call whenever it wants more data.
-        /// Note: the client will probably want more data every time it gets data
-        /// </summary>
-        public static void ServerWantsMoreData(PreservedState state)
-        {
-            state.TheSocket.BeginReceive(state.Buffer, 0, state.MAXBUFFERSIZE, 0, new AsyncCallback(ServerReceiveCallback), state);
-        }
-
-        /// <summary>
-        /// This function will allow a program to send data over a socket. 
-        /// This function converts the data into bytes and then sends them using socket.BeginSend.
-        /// </summary>
-        /// <param name="socket"></param>
-        /// <param name="data"></param>
-        public static void Send(Socket socket, String data)
-        {
-            try {
-                lock (socket)
-                {
-                    byte[] byteData = encoding.GetBytes(data);
-
-                    // Begin sending the data to the remote device.
-                    socket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallBack), socket);
-                   
-                }
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine("SEND ERROR: " + e.Message);
-            }
-        }
-
-        /// <summary>
-        /// This function "assists" the Send function. If all the data has been sent, 
-        /// then life is good and nothing needs to be done. If there is more data to send, 
-        /// the SendCallBack needs to arrange to send this data.
-        /// </summary>
-        public static void SendCallBack(IAsyncResult ar)
-        {
             try
             {
                 // Retrieve the socket from the state object.
                 Socket client = (Socket)ar.AsyncState;
 
-                // Complete sending the data to the remote device.
-                int bytesSent = client.EndSend(ar);
-                //Console.WriteLine("Bytes Sent " + bytesSent.ToString());
+                lock (client)
+                {
+                    // Complete sending the data to the remote device.
+                    int bytesSent = client.EndSend(ar);
+                    
+                }
+
 
             }
             catch (Exception e)
             {
-                Console.WriteLine("Semd Callback ERROR: "+ e.Message);
+                Debug.WriteLine(e.ToString());
             }
+        }
+
+        private static void Receive(Socket client)
+        {
+            try
+            {
+                // Create the state object.
+                StateObject state = new StateObject();
+                state.workSocket = client;
+
+                lock (state.workSocket)
+                {
+                    // Begin receiving the data from the remote device.
+                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                        new AsyncCallback(ReceiveCallback), state);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.ToString());
+            }
+        }
+
+        private static void ReceiveCallback(IAsyncResult ar)
+        {
+            try
+            {
+                StateObject state = (StateObject)ar.AsyncState;
+                lock (state.sb)
+                {
+
+                    Socket client = state.workSocket;
+
+                    // Read data from the remote device.
+                    int bytesRead = client.EndReceive(ar);
+
+                    if (bytesRead > 0)
+                    {
+                        string StringData = Encoding.UTF8.GetString(state.buffer, 0, bytesRead);
+                        state.sb.Append(StringData);
+                        state.ServerCallback(state);
+                    }
+                    else
+                    {
+
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        public static void GetData(StateObject state)
+        {
+            Socket client = state.workSocket;
+            client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), state);
         }
 
         /// <summary>
@@ -258,10 +176,8 @@ namespace Network_Controller
         /// Upon a connection request coming in the OS should invoke the Accept_a_New_Client method 
         /// </summary>
         /// <param name="callback"></param>
-        public static void Server_Awaiting_Client_Loop(Action<PreservedState> CallBack)
+        public static void Server_Awaiting_Client_Loop(Action<StateObject> CallBack)
         {
-
-
             // Connect to server
             IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
             IPAddress ipAddress = ipHostInfo.AddressList[0];
@@ -280,8 +196,10 @@ namespace Network_Controller
                 ServerConnect.Bind(clientep);
                 ServerConnect.Listen(10);
 
+
                 // Creat new state object, and start callback           
-                PreservedState State = new PreservedState(ServerConnect, null);
+                StateObject State = new StateObject();
+                State.workSocket = ServerConnect;
                 State.ServerCallback = CallBack;
 
                 // Start connection
@@ -289,7 +207,7 @@ namespace Network_Controller
             }
             catch (Exception e)
             {
-                Console.WriteLine("Connection faild.\n" + e.Message);
+                Console.WriteLine("Server_Awaiting_Client_Loop ERROR: .\n" + e.Message);
             }
 
         }
@@ -304,24 +222,26 @@ namespace Network_Controller
             try
             {
                 // Pull state from result
-                PreservedState listener = (PreservedState)ar.AsyncState;
+                StateObject listener = (StateObject)ar.AsyncState;
                 // New socket representing the client connection
-                Socket ClientSocket = listener.TheSocket.EndAccept(ar);
+                Socket ClientSocket = listener.workSocket.EndAccept(ar);
 
-                PreservedState ClientState = new PreservedState(ClientSocket, null);
+                StateObject ClientState = new StateObject();
+                ClientState.workSocket = ClientSocket;
                 ClientState.ServerCallback = listener.ServerCallback;
 
                 ClientState.ServerCallback(ClientState);
 
 
                 // Listener thread
-                listener.TheSocket.BeginAccept(Accept_a_New_Client, listener);
+                listener.workSocket.BeginAccept(Accept_a_New_Client, listener);
 
             }
             catch (Exception e)
             {
-                Console.WriteLine("An error occured.\n" + e.Message);
+                Console.WriteLine("Accept Failed! -> \n" + e.Message);
             }
         }
+
     }
 }

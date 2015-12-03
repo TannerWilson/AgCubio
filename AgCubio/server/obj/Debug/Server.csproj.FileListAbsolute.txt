@@ -1,0 +1,13 @@
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Server.exe.config
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Server.exe
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Server.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\AgCubio.exe
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Model.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Network_Controller.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Newtonsoft.Json.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\AgCubio.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Model.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\Network_Controller.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.csprojResolveAssemblyReference.cache
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.exe
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.pdb

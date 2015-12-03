@@ -1,0 +1,6 @@
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\bin\Debug\Model.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\bin\Debug\Model.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\Model.csprojResolveAssemblyReference.cache
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\Model.dll
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\Model.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\bin\Debug\Newtonsoft.Json.dll

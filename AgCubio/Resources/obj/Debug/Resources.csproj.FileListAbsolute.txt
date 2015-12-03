@@ -1,0 +1,6 @@
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\obj\Debug\Resources.csprojResolveAssemblyReference.cache
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\bin\Debug\Resources.exe.config
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\bin\Debug\Resources.exe
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\bin\Debug\Resources.pdb
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\obj\Debug\Resources.exe
+c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\obj\Debug\Resources.pdb

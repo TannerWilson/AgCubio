@@ -8,9 +8,10 @@ namespace Resources
 {
     class Class1
     {
+        static void Main(string[] args)
+        {
 
-        static void Main()
-        { }
 
+        }
     }
 }

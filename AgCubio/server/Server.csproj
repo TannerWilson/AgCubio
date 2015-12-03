@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{90C1D86C-0C52-43C2-803D-B4BC4B136CA5}</ProjectGuid>
+    <ProjectGuid>{6158027A-4A04-45F8-8A3D-490219A46012}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>server</RootNamespace>
-    <AssemblyName>server</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <RootNamespace>Server</RootNamespace>
+    <AssemblyName>Server</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -34,9 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Resources\Library\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\..\..\PS8Server\Team_Hiphopopotamus\AgCubio\Resources\Library\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,21 +53,17 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AgCubio\View.csproj">
+      <Project>{07b4b7ad-cb31-4b3e-923b-39c308e6e612}</Project>
+      <Name>View</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Model\Model.csproj">
-      <Project>{f51bdc8c-c6b5-4aa8-8631-50c2fb6632f8}</Project>
+      <Project>{eb8f96ce-e29a-4986-9b47-2f41faac6d04}</Project>
       <Name>Model</Name>
     </ProjectReference>
     <ProjectReference Include="..\Network_Controller\Network_Controller.csproj">
-      <Project>{f2f7f03d-7fe0-487f-89e5-79938b925b5e}</Project>
+      <Project>{32ad05b3-5012-4dde-9cea-7e17a9faabc4}</Project>
       <Name>Network_Controller</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Resources\Resources.csproj">
-      <Project>{e6f07138-8d8f-4cc8-af5c-d0227daca082}</Project>
-      <Name>Resources</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Veiw\View.csproj">
-      <Project>{c019aac2-f480-48c7-9d4f-14a5662e9997}</Project>
-      <Name>View</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
