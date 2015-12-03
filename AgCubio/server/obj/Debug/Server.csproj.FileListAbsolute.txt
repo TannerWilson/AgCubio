@@ -11,3 +11,18 @@ c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\bin\Debug\
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.csprojResolveAssemblyReference.cache
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.exe
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Server\obj\Debug\Server.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Server.exe.config
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\obj\Debug\Server.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\obj\Debug\Server.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Server.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Server.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\AgCubio.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Model.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Network_Controller.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\AgCubio.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Model.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Network_Controller.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Newtonsoft.Json.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\obj\Debug\Server.csprojResolveAssemblyReference.cache
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\AgCubio.xml

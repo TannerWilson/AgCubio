@@ -80,7 +80,7 @@ namespace Model
         /// </summary>
         public double Top()
         {
-            return loc_y - (double)this.getWidth();
+            return loc_y - (double)this.getWidth() / 2;
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Model
         /// </summary>
         public double Right()
         {
-            return loc_x + (double)this.getWidth();
+            return loc_x + (double)this.getWidth() / 2;
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace Model
         /// </summary>
         public double Left()
         {
-            return loc_x - (double)this.getWidth();
+            return loc_x - (double)this.getWidth() / 2;
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace Model
         /// </summary>
         public double Bottom()
         {
-            return loc_y + (double)this.getWidth();
+            return loc_y + (double)this.getWidth() / 2;
         }
 
         /// <summary>
@@ -133,23 +133,23 @@ namespace Model
         {
             if (this.loc_x < x)
             {
-                this.loc_x += 1 * Speed;
+                this.loc_x += 1 * GetSpeed();
                 Changed = true;
             }
             else if (this.loc_x > x)
             {
-                this.loc_x -= 1 * Speed;
+                this.loc_x -= 1 * GetSpeed();
                 Changed = true;
             }
 
             if (this.loc_y < y)
             {
-                this.loc_y += 1 * Speed;
+                this.loc_y += 1 * GetSpeed();
                 Changed = true;
             }
             else if (this.loc_y > y)
             {
-                this.loc_y -= 1 * Speed;
+                this.loc_y -= 1 * GetSpeed();
                 Changed = true;
             }
         }
@@ -169,10 +169,48 @@ namespace Model
             this.Mass -= AttritionRate;
         }
 
+        private float GetSpeed()
+        {
+            return 2;
+        }
+
         public void SetNewPosition(float x, float y)
         {
             this.NewX = x;
             this.NewY = y;
+        }
+
+        public static bool Collide(Cube Cube1, Cube Cube2)
+        {
+            //if ((Cube1.Left() >= Cube2.Right() || Cube1.Right() <= Cube2.Left()) && (Cube1.Top() <= Cube2.Bottom() || Cube1.Bottom() >= Cube2.Top()))
+            //    return true;
+            //else
+            //{
+            //    return false;
+            //}
+
+            //double t1 = Cube1.Top();
+            //double b1 = Cube1.Bottom();
+            //double r1 = Cube1.Right();
+            //double l1 = Cube1.Left();
+
+            //double t2 = Cube2.Top();
+            //double b2 = Cube2.Bottom();
+            //double r2 = Cube2.Right();
+            //double l2 = Cube2.Left();
+
+            //if ((Cube1.Top() < Cube2.Bottom() && Cube1.Right() > Cube2.Left()) ||
+            //   (Cube1.Top() < Cube2.Bottom() && Cube2.Right() < Cube1.Left()) ||
+            //   (Cube1.Bottom() > Cube2.Top() && Cube1.Right() > Cube2.Left()) ||
+            //   (Cube1.Bottom() > Cube2.Top() && Cube2.Right() > Cube1.Left()))
+            //    return true;
+
+            //else return false;
+
+            return !((Cube1.Bottom() < Cube2.Top()) ||
+                    (Cube1.Top() > Cube2.Bottom()) ||
+                    (Cube1.Left() > Cube2.Right()) ||
+                    (Cube1.Right() < Cube2.Left()));
         }
 
     }
@@ -198,7 +236,7 @@ namespace Model
         private int MinSpeed;
 
         private int FoodValue;
-        private float StartingMassValue = 1000;
+        private float StartingMassValue = 1100;
         private int MaxFood = 10;
         private float MinSplitMass;
         private float MinSplitDistance;

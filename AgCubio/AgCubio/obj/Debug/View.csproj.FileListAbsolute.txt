@@ -14,3 +14,21 @@ c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug
 c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.pdb
 c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\obj\Debug\AgCubio.AgCubioForm.resources
 c:\users\despain\documents\visual studio 2015\Projects\AgCubio\AgCubio\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\AgCubio.exe.config
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\AgCubio.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\AgCubio.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Model.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Network_Controller.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Resources.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Model.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Network_Controller.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Resources.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\Newtonsoft.Json.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\View.csprojResolveAssemblyReference.cache
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\AgCubio.AgCubioForm.resources
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\AgCubio.Properties.Resources.resources
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\View.csproj.GenerateResource.Cache
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\AgCubio.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\obj\Debug\AgCubio.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\AgCubio\bin\Debug\AgCubio.XML

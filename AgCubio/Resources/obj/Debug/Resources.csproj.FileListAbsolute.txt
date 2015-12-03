@@ -4,3 +4,10 @@ c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\bin\Deb
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\bin\Debug\Resources.pdb
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\obj\Debug\Resources.exe
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Resources\obj\Debug\Resources.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.exe.config
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtonsoft.Json.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.exe
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.pdb

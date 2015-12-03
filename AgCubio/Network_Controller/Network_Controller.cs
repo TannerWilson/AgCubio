@@ -77,16 +77,21 @@ namespace Network_Controller
 
         public static void Send(Socket client, String data)
         {
-            lock (client)
+            try
             {
-                // Convert the string data to byte data using ASCII encoding.
-                byte[] byteData = Encoding.UTF8.GetBytes(data);
+                lock (client)
+                {
+                    // Convert the string data to byte data using ASCII encoding.
+                    byte[] byteData = Encoding.UTF8.GetBytes(data);
 
-                // Begin sending the data to the remote device.
-                client.BeginSend(byteData, 0, byteData.Length, 0,
-                    new AsyncCallback(SendCallback), client);
+                    // Begin sending the data to the remote device.
+                    client.BeginSend(byteData, 0, byteData.Length, 0,
+                        new AsyncCallback(SendCallback), client);
+                }
+            }catch(Exception e)
+            {
+
             }
-
         }
 
         private static void SendCallback(IAsyncResult ar)

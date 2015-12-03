@@ -105,11 +105,23 @@ namespace Server
             // Send palyer
             Network.Send(State.workSocket, PlayerJsonString + "\n");
             // Send food data
-            //SendInitFoodData(State);
+            SendInitFoodData(State);
 
 
 
             Network.GetData(State);
+        }
+
+        public static void SendInitFoodData(StateObject State)
+        {
+            lock(GameWorld)
+            {
+                foreach(Cube FoodCube in GameWorld.FoodCubes.Values)
+                {
+                    string JsonCube = JsonConvert.SerializeObject(FoodCube);
+                    Network.Send(State.workSocket, JsonCube + "\n");
+                }
+            }
         }
         /// <summary>
         /// Receives data from clients. Should be either (move,x,y) or (split,x,y). 
@@ -148,7 +160,7 @@ namespace Server
                                 {
                                     // Ensure request is formatted correctly
                                     int x, y;
-                                    if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[1].ToString(), out y))
+                                    if (Int32.TryParse(RequestSplitString[1].ToString(), out x) && Int32.TryParse(RequestSplitString[2].ToString(), out y))
                                     {
 
                                         ClientState PlayerState = Clients[State.Name];
@@ -157,7 +169,6 @@ namespace Server
                                         foreach (string UID in PlayerState.UID)
                                         {
                                             GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
-                                            Console.WriteLine(x +", " + y);
                                         }
 
                                     }
@@ -196,6 +207,7 @@ namespace Server
                 List<string> UpdatedCubes = new List<string>();
                 // Creat new food cube and send to each client
                 string FoodCube = GameWorld.GenerateNewFood();
+
                 foreach (ClientState state in Clients.Values)
                 {
                     if (FoodCube != null)
@@ -206,6 +218,14 @@ namespace Server
                 foreach (Cube CubeItem in GameWorld.DictionaryOfCubes.Values)
                 {
                     string UpdatedJsonCube = CubeItem.Update();
+
+                    foreach(Cube FCube in GameWorld.FoodCubes.Values)
+                    {
+                        if(Cube.Collide(CubeItem, FCube))
+                        {
+                            Console.WriteLine("collide");
+                        }
+                    }
 
                     if (UpdatedJsonCube != null)
                     {

@@ -4,3 +4,10 @@ c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\M
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\Model.dll
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\obj\Debug\Model.pdb
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Model\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Model.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Model.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.Json.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.csprojResolveAssemblyReference.cache

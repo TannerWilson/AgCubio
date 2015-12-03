@@ -3,3 +3,9 @@ c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controlle
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.csprojResolveAssemblyReference.cache
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.dll
 c:\Users\Despain\documents\visual studio 2015\Projects\AgCubio\Network_Controller\obj\Debug\Network_Controller.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Network_Controller.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Network_Controller.pdb
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Newtonsoft.Json.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Newtonsoft.Json.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.dll
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.pdb
