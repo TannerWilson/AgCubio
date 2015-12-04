@@ -43,6 +43,7 @@ namespace Model
         private float AttritionRate;
 
         public bool Changed;
+        public bool Virus = false;
 
         [JsonProperty]
         public int team_id;
@@ -125,10 +126,12 @@ namespace Model
             }
             else
                 return null;
-
-
         }
+    
 
+        /// <summary>
+        /// Handles Movement
+        /// </summary>
         public void Move(float x, float y)
         {
             if (this.loc_x < x)
@@ -169,9 +172,28 @@ namespace Model
             this.Mass -= AttritionRate;
         }
 
+        /// <summary>
+        /// Return specific speed based on Mass
+        /// </summary>
+        /// <returns></returns>
         private float GetSpeed()
         {
-            return 2;
+            if (Mass > 1 && Mass < 250)
+                return 30;
+            if (Mass > 251 && Mass < 750)
+                return 20;
+            if (Mass > 750 && Mass < 2000)
+                return 5;
+            if (Mass > 2000 && Mass < 2500)
+                return 4;
+            if (Mass > 2501 && Mass < 3000)
+                return 3;
+            if (Mass > 3001 && Mass < 4000)
+                return 2;
+            if (Mass > 4000)
+                return 1;
+            return 1;
+
         }
 
         public void SetNewPosition(float x, float y)
@@ -237,15 +259,19 @@ namespace Model
 
         private int FoodValue;
         private float StartingMassValue = 1100;
-        private int MaxFood = 10;
-        private float MinSplitMass;
+        private int MaxFood = 5000;
+        private float MinSplitMass = 300;
         private float MinSplitDistance;
         private int MaxSplits;
         private float AbsorbDistance;
 
         public static Random Rand;
 
-
+        /// <summary>
+        /// Creates a world
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
         public World(int width, int height)
         {
             this.Height = height;
@@ -257,6 +283,10 @@ namespace Model
 
         }
 
+        /// <summary>
+        /// Adds cubes to the world
+        /// </summary>
+        /// <param name="JsonCubeString"></param>
         public void AddCube(string JsonCubeString)
         {
             Cube NewCube = JsonConvert.DeserializeObject<Cube>(JsonCubeString);
@@ -275,6 +305,14 @@ namespace Model
                 else
                     FoodCubes.Remove(NewCube.uid);
             }
+        }
+
+        /// <summary>
+        /// Handle splitting
+        /// </summary>
+        public void Split( float x, float y)
+        {
+
         }
 
         ////****
@@ -315,6 +353,21 @@ namespace Model
         }
 
         /// <summary>
+        /// Creates a random integer RGB value used to create colors.
+        /// </summary>
+        /// <returns></returns>
+        private static int VirusColor()
+        {
+
+            int a = 255;
+            int r = 0;
+            int g = 255;
+            int b = 0;
+
+            return a << 24 | r << 16 | g << 8 | b;
+        }
+
+        /// <summary>
         /// Generates a random location to place cubes on the screen
         /// (Used by the server)
         /// </summary>
@@ -330,19 +383,31 @@ namespace Model
         /// <summary>
         /// Process client requests
         /// </summary>
-        public void ActionCommand(string Action, int x, int y, string UID)
+        public string ActionCommand(string Action, int x, int y, string UID)
         {
             if (Action == "Move" || Action == "move")
             {
                 if (DictionaryOfCubes[UID].NewX != x && DictionaryOfCubes[UID].NewY != y)
                 {
                     DictionaryOfCubes[UID].SetNewPosition(x, y);
+                    return null;
                 }
             }
             else if (Action == "Split" || Action == "split")
             {
-                Console.WriteLine("Split to " + x + ", " + y);
+                Cube Player = DictionaryOfCubes[UID];
+                if(Player.Mass > MinSplitMass)
+                {
+                    Player.Mass = Player.Mass / 2;
+                }
+
+                // creat new split cube
+                Cube SplitCube = new Cube(CreateUID().ToString(), Player.Name, Player.argb_color, Player.Mass, false, Player.loc_x +20, Player.loc_y + 20, Player.team_id);
+                DictionaryOfCubes.Add(SplitCube.uid, SplitCube);
+
+                return SplitCube.uid;
             }
+            return null;
         }
 
         /// <summary>
@@ -357,7 +422,7 @@ namespace Model
             GetRandomLocation(out x, out y);
 
             // Create players cube
-            Cube NewPlayerCube = new Cube(CreateUID().ToString(), Name, ToArgb(), StartingMassValue, false, 0, 0, CreateTeamID());
+            Cube NewPlayerCube = new Cube(CreateUID().ToString(), Name, ToArgb(), StartingMassValue, false, x, y, CreateTeamID());
 
             // Generate and return JSON string.
             AddCube(JsonConvert.SerializeObject(NewPlayerCube));
@@ -379,6 +444,16 @@ namespace Model
                 Cube NewFoodCube = new Cube(CreateUID().ToString(), "", ToArgb(), 1, true, x, y, -1);
 
                 FoodCubes.Add(NewFoodCube.uid, NewFoodCube);
+            }
+            // Add viruses
+            for (int i = 0; i < 5; i++)
+            {
+                int x, y;
+                GetRandomLocation(out x, out y);
+
+                Cube NewVirus = new Cube(CreateUID().ToString(), "", VirusColor(), 250, true, x, y, -1);
+                NewVirus.Virus = true;
+                FoodCubes.Add(NewVirus.uid, NewVirus);
             }
         }
 
@@ -402,6 +477,20 @@ namespace Model
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Generates a new virus
+        /// </summary>
+        /// <returns></returns>
+        public string GenerateNewVirus()
+        {
+            int x, y;
+            GetRandomLocation(out x, out y);
+          
+            Cube NewVirus = new Cube(CreateUID().ToString(), "", VirusColor(), 250, true, x, y, -1);
+            NewVirus.Virus = true;           
+            return JsonConvert.SerializeObject(NewVirus) + '\n';
         }
 
 

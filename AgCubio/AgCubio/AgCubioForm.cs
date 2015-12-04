@@ -82,27 +82,28 @@ namespace AgCubio
         {
             lock (ServerState.sb)
             {
-               
-                
-                string[] SplitData = ServerState.sb.ToString().Split('\n');
-                ServerState.sb.Clear();
-                foreach (string StringItem in SplitData)
+                lock (GameWorld)
                 {
-                    //Debug.WriteLine(StringItem);
-                    if (StringItem.StartsWith("{") && StringItem.EndsWith("}"))
+
+                    string[] SplitData = ServerState.sb.ToString().Split('\n');
+                    ServerState.sb.Clear();
+                    foreach (string StringItem in SplitData)
                     {
-                        lock (GameWorld)
+                        //Debug.WriteLine(StringItem);
+                        if (StringItem.StartsWith("{") && StringItem.EndsWith("}"))
                         {
+
                             GameWorld.AddCube(StringItem);
+
+                        }
+                        else
+                        {
+                            ServerState.sb.Append(StringItem);
                         }
                     }
-                    else
-                    {
-                        ServerState.sb.Append(StringItem);
-                    }
                 }
+                Network.GetData(ServerState);
             }
-            Network.GetData(ServerState);
         }
 
         private void AgCubioForm_Paint(object sender, PaintEventArgs e)

@@ -13,7 +13,6 @@ namespace Server
 {
     class Server
     {
-
         static private World GameWorld;
 
         static HashSet<StateObject> States;
@@ -106,17 +105,38 @@ namespace Server
             Network.Send(State.workSocket, PlayerJsonString + "\n");
             // Send food data
             SendInitFoodData(State);
+            SendPlayersData(State);
 
 
 
             Network.GetData(State);
         }
 
+        /// <summary>
+        /// Send client the players
+        /// </summary>
+        /// <param name="State"></param>
+        public static void SendPlayersData(StateObject State)
+        {
+            lock (GameWorld)
+            {
+                foreach (Cube PlayerCube in GameWorld.DictionaryOfCubes.Values)
+                {
+                    string JsonCube = JsonConvert.SerializeObject(PlayerCube);
+                    Network.Send(State.workSocket, JsonCube + "\n");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sends initial food
+        /// </summary>
+        /// <param name="State"></param>
         public static void SendInitFoodData(StateObject State)
         {
-            lock(GameWorld)
+            lock (GameWorld)
             {
-                foreach(Cube FoodCube in GameWorld.FoodCubes.Values)
+                foreach (Cube FoodCube in GameWorld.FoodCubes.Values)
                 {
                     string JsonCube = JsonConvert.SerializeObject(FoodCube);
                     Network.Send(State.workSocket, JsonCube + "\n");
@@ -165,12 +185,24 @@ namespace Server
 
                                         ClientState PlayerState = Clients[State.Name];
 
+                                        List<string> ToAdd = new List<string>();
 
-                                        foreach (string UID in PlayerState.UID)
+                                        if (RequestSplitString[0] == "split")
                                         {
-                                            GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
+                                            PlayerState.timer += 10;
                                         }
 
+                                        foreach (string UID in PlayerState.UIDS)
+                                        {
+                                            string ReturnUID = GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);
+                                            if (ReturnUID != null && !PlayerState.UIDS.Contains(ReturnUID))
+                                                ToAdd.Add(ReturnUID);
+                                        }
+
+                                        foreach (string NewCubeUID in ToAdd)
+                                        {
+                                            PlayerState.UIDS.Add(NewCubeUID);
+                                        }
                                     }
                                     else
                                     {
@@ -190,6 +222,39 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// Called when a player hits a virus
+        /// </summary>
+        /// <param name="cube"></param>
+        /// <returns></returns>
+        public static string VirusSplit(Cube cube)
+        {
+            ClientState PlayerState = Clients[cube.Name];
+
+            List<string> ToAdd = new List<string>();
+            PlayerState.timer += 10;
+            foreach (string UID in PlayerState.UIDS)
+            {
+                string ReturnUID = GameWorld.ActionCommand("split", (int)cube.loc_x, (int)cube.loc_y, UID);
+                if (ReturnUID != null && !PlayerState.UIDS.Contains(ReturnUID))
+                    ToAdd.Add(ReturnUID);
+            }
+
+            foreach (string NewCubeUID in ToAdd)
+            {
+                PlayerState.UIDS.Add(NewCubeUID);
+            }
+            return GameWorld.GenerateNewVirus();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static void Merge()
+        {
+
+        }
+
         static void PlayerConnect(StateObject State)
         {
             State.ServerCallback = GetPlayerName;
@@ -203,64 +268,155 @@ namespace Server
         {
             lock (GameWorld)
             {
+                List<Cube> ToDelete = new List<Cube>();
 
                 List<string> UpdatedCubes = new List<string>();
-                // Creat new food cube and send to each client
+
+                // Create new food cube and send to each client
                 string FoodCube = GameWorld.GenerateNewFood();
 
+                // Send new food cube to clients
                 foreach (ClientState state in Clients.Values)
                 {
                     if (FoodCube != null)
                         Network.Send(state.Socket, FoodCube);
                 }
 
-
+                // Check for changes
                 foreach (Cube CubeItem in GameWorld.DictionaryOfCubes.Values)
                 {
                     string UpdatedJsonCube = CubeItem.Update();
+                    // If updated, add to updated list
+                    if (UpdatedJsonCube != null)
+                        UpdatedCubes.Add(UpdatedJsonCube);
 
-                    foreach(Cube FCube in GameWorld.FoodCubes.Values)
+
+                    //Check if any of the client cubes collide with food
+                    foreach (Cube FCube in GameWorld.FoodCubes.Values)
                     {
-                        if(Cube.Collide(CubeItem, FCube))
+                        // Remove food
+                        if (Cube.Collide(CubeItem, FCube))
                         {
-                            Console.WriteLine("collide");
+                            if (FCube.Virus)
+                            {
+                               string virus = VirusSplit(CubeItem);
+                               UpdatedCubes.Add(virus);
+                               //ToDelete.Add(FCube);
+                            }
+
+                            // Update food and player masses to be sent to clients
+                            FCube.Mass = 0;
+                            ToDelete.Add(FCube);
+                            CubeItem.Mass += 3;
                         }
                     }
 
-                    if (UpdatedJsonCube != null)
+                    // Check for player collisions
+                    foreach (Cube Player in GameWorld.DictionaryOfCubes.Values)
                     {
-                        UpdatedCubes.Add(UpdatedJsonCube);
+                        // Colided with a player
+                        if (Cube.Collide(CubeItem, Player))
+                        {
+                            // Colided with player not on our team
+                            if (CubeItem.team_id != Player.team_id)
+                            {
+                                // Check for lower massed cube
+                                if (CubeItem.Mass > (Player.Mass + 30) && (CubeItem.Mass != 0 && Player.Mass != 0))
+                                {                                    
+                                    Player.Mass = 0;
+                                    // Add lower mass cube to deleted list
+                                    ToDelete.Add(Player);
+                                }
+                            }
+                        }
                     }
                 }
 
+                // Send all updated data to clients
                 foreach (ClientState state in Clients.Values)
                 {
-                    foreach (string UpdatedCubeItem in UpdatedCubes)
+                        // Remove splitted player cubes
+                        //Cube first = GameWorld.DictionaryOfCubes[state.UIDS.First()];
+                        //List<string> UIDSDelete = new List<string>();
+                        //foreach (string uid in state.UIDS)
+                        //{
+                        //    if (uid != first.uid)
+                        //    {
+                        //        Cube next = GameWorld.DictionaryOfCubes[uid];
+                        //        first.Mass += next.Mass;
+                        //        GameWorld.DictionaryOfCubes.Remove(uid);
+                        //        UIDSDelete.Add(uid);
+                        //    }
+                        //}
+
+                        //// remove 
+                        //foreach (string uid in UIDSDelete)
+                        //{
+                        //    state.UIDS.Remove(uid);
+                        //}
+
+                        // Send changed cube values
+                        foreach (string UpdatedCubeItem in UpdatedCubes)
+                        {
+                            Network.Send(state.Socket, UpdatedCubeItem);
+                        }
+
+                        // Send all items to be deleted
+                        foreach (Cube item in ToDelete)
+                        {
+                            string CubeString = JsonConvert.SerializeObject(item);
+                            Network.Send(state.Socket, CubeString + '\n');
+                        }
+                    
+                    // Delete all items 
+                    foreach (Cube item in ToDelete)
                     {
-                        ///Console.WriteLine("Sending DATA");
-                        Network.Send(state.Socket, UpdatedCubeItem);
+                        // Remove cubes from server's data structures
+
+                        if (GameWorld.DictionaryOfCubes.ContainsKey(item.uid))
+                            GameWorld.DictionaryOfCubes.Remove(item.uid);
+
+                        if (GameWorld.FoodCubes.ContainsKey(item.uid))
+                            GameWorld.FoodCubes.Remove(item.uid);
+
+                        //string CubeName = item.Name;
+                        // Delete Players that have been merged
+                        //ClientState CurrentClient = Clients[CubeName];
+
+                        //if (CurrentClient != null && CurrentClient.UIDS.Contains(item.uid))
+                        //{
+                        //    CurrentClient.UIDS.Remove(item.uid);
+
+                        //    if (CurrentClient.UIDS.Count < 1)
+                        //    {
+                        //        CurrentClient.Socket.Close();
+                        //        Clients.Remove(CurrentClient.Name);
+                        //    }
+                        //}                   
                     }
                 }
             }
-
-
         }
 
 
-
+        /// <summary>
+        /// Object used to represent each client connected to the server.
+        /// </summary>
         protected class ClientState
         {
+            public int timer;
             public Socket Socket;
             public string Name;
-            public HashSet<string> UID;
+            public HashSet<string> UIDS;
             public int TeamID;
 
             public ClientState(Socket _socket, string _name, HashSet<string> uid, int team)
             {
                 Socket = _socket;
                 Name = _name;
-                UID = uid;
+                UIDS = uid;
                 TeamID = team;
+                timer = 0;
             }
         }
     }
