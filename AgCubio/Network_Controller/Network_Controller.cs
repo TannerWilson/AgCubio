@@ -32,6 +32,11 @@ namespace Network_Controller
 
     public static class Network
     {
+        /// <summary>
+        /// Used to connect to the server
+        /// </summary>
+        /// <param name="Callback"></param>
+        /// <param name="Hostname"></param>
         public static void ConnectToServer(Action<StateObject> Callback, string Hostname)
         {
             IPHostEntry ipHostInfo = Dns.Resolve(Hostname);
@@ -51,6 +56,10 @@ namespace Network_Controller
 
         }
 
+        /// <summary>
+        /// Call back called when connected
+        /// </summary>
+        /// <param name="ar"></param>
         private static void ConnectCallback(IAsyncResult ar)
         {
             try
@@ -75,6 +84,11 @@ namespace Network_Controller
             }
         }
 
+        /// <summary>
+        /// Sends information
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="data"></param>
         public static void Send(Socket client, String data)
         {
             try
@@ -94,6 +108,10 @@ namespace Network_Controller
             }
         }
 
+        /// <summary>
+        /// Callback called while sending
+        /// </summary>
+        /// <param name="ar"></param>
         private static void SendCallback(IAsyncResult ar)
         {
 
@@ -117,6 +135,10 @@ namespace Network_Controller
             }
         }
 
+        /// <summary>
+        /// Receiving data
+        /// </summary>
+        /// <param name="client"></param>
         private static void Receive(Socket client)
         {
             try
@@ -138,6 +160,10 @@ namespace Network_Controller
             }
         }
 
+        /// <summary>
+        /// Callback called when receiving
+        /// </summary>
+        /// <param name="ar"></param>
         private static void ReceiveCallback(IAsyncResult ar)
         {
             try
@@ -170,6 +196,10 @@ namespace Network_Controller
             }
         }
 
+        /// <summary>
+        /// Ask for more data
+        /// </summary>
+        /// <param name="state"></param>
         public static void GetData(StateObject state)
         {
             Socket client = state.workSocket;
