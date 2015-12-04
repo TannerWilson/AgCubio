@@ -13,12 +13,24 @@ namespace Server
 {
     class Server
     {
+        /// <summary>
+        /// Game world
+        /// </summary>
         static private World GameWorld;
 
+        /// <summary>
+        /// Clients connected to server
+        /// </summary>
         static HashSet<StateObject> States;
 
+        /// <summary>
+        /// Heart beat of the game
+        /// </summary>
         static private int TickRate;
 
+        /// <summary>
+        /// Heart beat of the game
+        /// </summary>
         static Timer timer;
 
         // Clients connected to the game
@@ -187,11 +199,12 @@ namespace Server
 
                                         List<string> ToAdd = new List<string>();
 
+                                        // Set merge timer
                                         if (RequestSplitString[0] == "split")
                                         {
                                             PlayerState.timer += 10;
                                         }
-
+                                        // Add new cubes to the player's set
                                         foreach (string UID in PlayerState.UIDS)
                                         {
                                             string ReturnUID = GameWorld.ActionCommand(RequestSplitString[0], x, y, UID);

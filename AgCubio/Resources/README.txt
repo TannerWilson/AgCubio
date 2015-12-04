@@ -12,8 +12,14 @@ Author: Joseph Despain
 	but do not eat eachother.
 
 	2. Viruses do not de-spawn nor do they spawn new viruses upon a player colliding with them. We can have them despawn, but 
-	this only works without the splitting, so we chose to keep the split instead. In extent, hitting the virusses too much within
+	this only works without the splitting, so we chose to keep the split instead. In extent, hitting the virusses too much within	
 	a short time may cause the game to crash.
+		 
+	HOW TO FIX: comment out the lines: 
+							   string virus = VirusSplit(CubeItem);
+                               UpdatedCubes.Add(virus);
+	in the update method inside the server. This will alow you to "turn off" the viruses in the game and they will be treated exactly the same as food and 
+	will be deleted when the player touches them.
 
 	3. We do not have the ability to change the world constants through an XML document, but the constants do exist, so they can be manipulated
 	jsut not as conviently.
