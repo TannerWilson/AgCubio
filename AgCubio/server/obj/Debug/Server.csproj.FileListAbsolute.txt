@@ -26,3 +26,4 @@ C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\
 C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\Newtonsoft.Json.xml
 C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\obj\Debug\Server.csprojResolveAssemblyReference.cache
 C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\AgCubio.xml
+C:\Users\tannerw\Documents\AgCubioServer\Team_Hiphopopotamus\AgCubio\Server\bin\Debug\MySql.Data.dll

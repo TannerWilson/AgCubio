@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using Network_Controller;
 using System.Timers;
 using System.Net.Sockets;
+using System.Diagnostics;
+using MySql.Data.MySqlClient;
 
 namespace Server
 {
@@ -33,8 +35,17 @@ namespace Server
         /// </summary>
         static Timer timer;
 
-        // Clients connected to the game
+        /// <summary>
+        /// Clients connected to the game
+        /// </summary>
         static Dictionary<string, ClientState> Clients;
+
+        /// <summary>
+        /// Time when the server was spawned.
+        /// </summary>
+        public static int ServerStartTime;
+
+        public static Stopwatch stopwatch = new Stopwatch();
 
         static void Main(string[] args)
         {
@@ -47,6 +58,7 @@ namespace Server
         /// </summary>
         static public void start()
         {
+
             // Create world
             GameWorld = new World(1000, 1000);
             Network.Server_Awaiting_Client_Loop(PlayerConnect);
@@ -63,7 +75,7 @@ namespace Server
             {
                 GameWorld.CreateInitFood();
             }
-
+            stopwatch.Start();
             Console.Read();
         }
 
@@ -104,6 +116,7 @@ namespace Server
 
                 ClientState NewClient = new ClientState(State.workSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
                 Clients.Add(PlayerName, NewClient);
+                NewClient.TimeSpawned = stopwatch.ElapsedMilliseconds;
             }
 
             lock (State)
@@ -274,6 +287,45 @@ namespace Server
             Network.GetData(State);
         }
 
+
+        static void SendToDataBase(ClientState Client)
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                try
+                {
+
+
+                    // Open a connection
+                    conn.Open();
+
+                    // Create a command
+                    MySqlCommand command = conn.CreateCommand();
+
+                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Player_Info` (`LifeTime`, `MaxMass`, `HighestRank`, `Kills`, `ListOfKills`, `TimeOfDeath`, `UID`) VALUES(@LifeTime, @MaxMass, @HighestRank, @Kills, @ListOfKills, @TimeOfDeath, @UID);";
+                    command.Prepare();
+
+                    command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
+                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                    command.Parameters.AddWithValue("@HighestRank", 1);
+                    command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
+                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilled.ToString());
+                    command.Parameters.AddWithValue("@TimeOfDeath", Client.TimeDied.ToString());
+                    command.Parameters.AddWithValue("@UID", Client.UIDS.First());
+
+                    command.ExecuteNonQuery();
+                } catch(Exception e)
+                {
+                    throw e;
+                    //UPDATE `cs3500_tannerw`.`Player_Info` SET `LifeTime`='1233', `MaxMass`='123', `HighestRank`='123', `Kills`='79', `ListOfKills`='Your Mom2', `TimeOfDeath`='1000111' WHERE `UID`='8008';
+                }
+
+
+
+            }
+        }
+
         /// <summary>
         /// Updates all aspects of the world.
         /// </summary>
@@ -301,7 +353,16 @@ namespace Server
                     string UpdatedJsonCube = CubeItem.Update();
                     // If updated, add to updated list
                     if (UpdatedJsonCube != null)
+                    {
                         UpdatedCubes.Add(UpdatedJsonCube);
+                        Cube SQLServerCube = JsonConvert.DeserializeObject<Cube>(UpdatedJsonCube);
+                        float OldMass = Clients[SQLServerCube.Name].Mass;
+                        if (OldMass < SQLServerCube.Mass)
+                            Clients[SQLServerCube.Name].Mass = SQLServerCube.Mass;
+
+                    }
+
+
 
 
                     //Check if any of the client cubes collide with food
@@ -312,9 +373,9 @@ namespace Server
                         {
                             if (FCube.Virus)
                             {
-                               string virus = VirusSplit(CubeItem);
-                               UpdatedCubes.Add(virus);
-                               //ToDelete.Add(FCube);
+                                string virus = VirusSplit(CubeItem);
+                                UpdatedCubes.Add(virus);
+                                //ToDelete.Add(FCube);
                             }
 
                             // Update food and player masses to be sent to clients
@@ -335,7 +396,10 @@ namespace Server
                             {
                                 // Check for lower massed cube
                                 if (CubeItem.Mass > (Player.Mass + 30) && (CubeItem.Mass != 0 && Player.Mass != 0))
-                                {                                    
+                                {
+                                    // Add player to clients kills
+                                    Clients[CubeItem.Name].kills++;
+                                    Clients[CubeItem.Name].PlayersKilled.Add(Player.Name);
                                     Player.Mass = 0;
                                     // Add lower mass cube to deleted list
                                     ToDelete.Add(Player);
@@ -348,39 +412,39 @@ namespace Server
                 // Send all updated data to clients
                 foreach (ClientState state in Clients.Values)
                 {
-                        // Remove splitted player cubes
-                        //Cube first = GameWorld.DictionaryOfCubes[state.UIDS.First()];
-                        //List<string> UIDSDelete = new List<string>();
-                        //foreach (string uid in state.UIDS)
-                        //{
-                        //    if (uid != first.uid)
-                        //    {
-                        //        Cube next = GameWorld.DictionaryOfCubes[uid];
-                        //        first.Mass += next.Mass;
-                        //        GameWorld.DictionaryOfCubes.Remove(uid);
-                        //        UIDSDelete.Add(uid);
-                        //    }
-                        //}
+                    // Remove splitted player cubes
+                    //Cube first = GameWorld.DictionaryOfCubes[state.UIDS.First()];
+                    //List<string> UIDSDelete = new List<string>();
+                    //foreach (string uid in state.UIDS)
+                    //{
+                    //    if (uid != first.uid)
+                    //    {
+                    //        Cube next = GameWorld.DictionaryOfCubes[uid];
+                    //        first.Mass += next.Mass;
+                    //        GameWorld.DictionaryOfCubes.Remove(uid);
+                    //        UIDSDelete.Add(uid);
+                    //    }
+                    //}
 
-                        //// remove 
-                        //foreach (string uid in UIDSDelete)
-                        //{
-                        //    state.UIDS.Remove(uid);
-                        //}
+                    //// remove 
+                    //foreach (string uid in UIDSDelete)
+                    //{
+                    //    state.UIDS.Remove(uid);
+                    //}
 
-                        // Send changed cube values
-                        foreach (string UpdatedCubeItem in UpdatedCubes)
-                        {
-                            Network.Send(state.Socket, UpdatedCubeItem);
-                        }
+                    // Send changed cube values
+                    foreach (string UpdatedCubeItem in UpdatedCubes)
+                    {
+                        Network.Send(state.Socket, UpdatedCubeItem);
+                    }
 
-                        // Send all items to be deleted
-                        foreach (Cube item in ToDelete)
-                        {
-                            string CubeString = JsonConvert.SerializeObject(item);
-                            Network.Send(state.Socket, CubeString + '\n');
-                        }
-                    
+                    // Send all items to be deleted
+                    foreach (Cube item in ToDelete)
+                    {
+                        string CubeString = JsonConvert.SerializeObject(item);
+                        Network.Send(state.Socket, CubeString + '\n');
+                    }
+
                     // Delete all items 
                     foreach (Cube item in ToDelete)
                     {
@@ -392,20 +456,22 @@ namespace Server
                         if (GameWorld.FoodCubes.ContainsKey(item.uid))
                             GameWorld.FoodCubes.Remove(item.uid);
 
-                        //string CubeName = item.Name;
+                        string CubeName = item.Name;
                         // Delete Players that have been merged
-                        //ClientState CurrentClient = Clients[CubeName];
+                        ClientState CurrentClient = Clients[CubeName];
 
-                        //if (CurrentClient != null && CurrentClient.UIDS.Contains(item.uid))
-                        //{
-                        //    CurrentClient.UIDS.Remove(item.uid);
+                        if (CurrentClient != null && CurrentClient.UIDS.Contains(item.uid))
+                        {
+                            CurrentClient.UIDS.Remove(item.uid);
 
-                        //    if (CurrentClient.UIDS.Count < 1)
-                        //    {
-                        //        CurrentClient.Socket.Close();
-                        //        Clients.Remove(CurrentClient.Name);
-                        //    }
-                        //}                   
+                            if (CurrentClient.UIDS.Count < 1)
+                            {
+                                CurrentClient.TimeDied = stopwatch.ElapsedMilliseconds;
+                                CurrentClient.Socket.Close();
+                                SendToDataBase(CurrentClient);
+                                Clients.Remove(CurrentClient.Name);
+                            }
+                        }
                     }
                 }
             }
@@ -422,6 +488,11 @@ namespace Server
             public string Name;
             public HashSet<string> UIDS;
             public int TeamID;
+            public int kills;
+            public HashSet<string> PlayersKilled;
+            public long TimeSpawned;
+            public long TimeDied;
+            public float Mass;
 
             public ClientState(Socket _socket, string _name, HashSet<string> uid, int team)
             {
@@ -430,6 +501,11 @@ namespace Server
                 UIDS = uid;
                 TeamID = team;
                 timer = 0;
+            }
+
+            public int GetLifeTime()
+            {
+                return Convert.ToInt32((TimeSpawned / 1000) - (TimeDied / 1000));
             }
         }
     }
