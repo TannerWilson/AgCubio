@@ -9,7 +9,9 @@ using Network_Controller;
 using System.Timers;
 using System.Net.Sockets;
 using System.Diagnostics;
+using System.Threading;
 using MySql.Data.MySqlClient;
+using System.IO;
 
 namespace Server
 {
@@ -33,7 +35,7 @@ namespace Server
         /// <summary>
         /// Heart beat of the game
         /// </summary>
-        static Timer timer;
+        static System.Timers.Timer timer;
 
         /// <summary>
         /// Clients connected to the game
@@ -62,9 +64,10 @@ namespace Server
             // Create world
             GameWorld = new World(1000, 1000);
             Network.Server_Awaiting_Client_Loop(PlayerConnect);
+            Network.HTTPClientLoop(HTTPConnect);
 
             // Set up and start timer
-            timer = new Timer(33);
+            timer = new System.Timers.Timer(33);
             timer.Elapsed += new ElapsedEventHandler(Update);
             timer.Enabled = true;
 
@@ -116,6 +119,7 @@ namespace Server
 
                 ClientState NewClient = new ClientState(State.workSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
                 Clients.Add(PlayerName, NewClient);
+                NewClient.UID = PlayerCube.uid;
                 NewClient.TimeSpawned = stopwatch.ElapsedMilliseconds;
             }
 
@@ -281,29 +285,136 @@ namespace Server
 
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="State"></param>
         static void PlayerConnect(StateObject State)
         {
             State.ServerCallback = GetPlayerName;
             Network.GetData(State);
         }
 
+        /// <summary>
+        /// Connect to the web page server
+        /// </summary>
+        /// <param name="State"></param>
+        static void HTTPConnect(StateObject State)
+        {
+            State.ServerCallback = HTTPGetCommandRecieve;
+            Network.GetData(State);
+        }
 
+        /// <summary>
+        /// Receives the requests from the web page.
+        /// </summary>
+        /// <param name="State"></param>
+        static void HTTPGetCommandRecieve(StateObject State)
+        {
+            string[] SplitHTTPString = null;
+            lock (State.sb)
+            {
+                string[] stringSeparators = new string[] { "\r\n" };
+                SplitHTTPString = State.sb.ToString().Split(stringSeparators, StringSplitOptions.None);
+            }
+
+            string[] SplitGetString = SplitHTTPString[0].Split(' ');
+            HTTPRoute(SplitGetString[1], State);
+
+        }
+
+        /// <summary>
+        /// Processes the requests from the web page.
+        /// </summary>
+        /// <param name="Route"></param>
+        /// <param name="State"></param>
+        static void HTTPRoute(string Route, StateObject State)
+        {
+            Console.WriteLine(Route);
+            switch (Route)
+            {
+                case "/":
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
+                case "/highscores":
+                    sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
+
+            }
+
+
+        }
+
+        /// <summary>
+        /// Send the HTML to the web page
+        /// </summary>
+        /// <param name="State"></param>
+        /// <param name="html"></param>
+        static void HTTPReturn(StateObject State, string html)
+        {
+            State.ServerCallback = HTTPSendDone;
+            Network.HTTPSend(State, "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" + html);
+        }
+
+        /// <summary>
+        ///  Called after for a connection is made.
+        /// </summary>
+        /// <param name="State"></param>
+        public static void HTTPSendDone(StateObject State)
+        {
+
+            Console.WriteLine("END");
+            State.workSocket.Shutdown(SocketShutdown.Send);
+        }
+
+        /// <summary>
+        /// Reads HTML files
+        /// </summary>
+        /// <param name="Path"></param>
+        /// <returns></returns>
+        public static string ReadHTML(string Path)
+        {
+            return File.ReadAllText(Path);
+        }
+
+        /// <summary>
+        /// Record player information to the SQL database
+        /// </summary>
+        /// <param name="Client"></param>
         static void SendToDataBase(ClientState Client)
         {
             const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
-                try
+
+                bool DoesExist = false;
+                // Open a connection
+                conn.Open();
+
+                MySqlCommand ExistCommand = conn.CreateCommand();
+
+                ExistCommand.CommandText = "select 1 from Player_Info where uid = "+ Client.UID+";";
+
+                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
                 {
+                    if (reader.HasRows == true)
+                        DoesExist = true;
+                }
 
 
-                    // Open a connection
-                    conn.Open();
-
-                    // Create a command
-                    MySqlCommand command = conn.CreateCommand();
-
-                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Player_Info` (`LifeTime`, `MaxMass`, `HighestRank`, `Kills`, `ListOfKills`, `TimeOfDeath`, `UID`) VALUES(@LifeTime, @MaxMass, @HighestRank, @Kills, @ListOfKills, @TimeOfDeath, @UID);";
+                // Create a command
+                MySqlCommand command = conn.CreateCommand();
+                if (!DoesExist)
+                {
+                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Player_Info` (`LifeTime`, `MaxMass`, `HighestRank`, `Kills`, `ListOfKills`, `TimeOfDeath`, `UID`, `Name`) VALUES(@LifeTime, @MaxMass, @HighestRank, @Kills, @ListOfKills, @TimeOfDeath, @UID,@Name);";
                     command.Prepare();
 
                     command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
@@ -312,14 +423,34 @@ namespace Server
                     command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
                     command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilled.ToString());
                     command.Parameters.AddWithValue("@TimeOfDeath", Client.TimeDied.ToString());
-                    command.Parameters.AddWithValue("@UID", Client.UIDS.First());
+                    command.Parameters.AddWithValue("@UID", Client.UID);
+                    command.Parameters.AddWithValue("@Name", Client.Name);
 
-                    command.ExecuteNonQuery();
-                } catch(Exception e)
-                {
-                    throw e;
-                    //UPDATE `cs3500_tannerw`.`Player_Info` SET `LifeTime`='1233', `MaxMass`='123', `HighestRank`='123', `Kills`='79', `ListOfKills`='Your Mom2', `TimeOfDeath`='1000111' WHERE `UID`='8008';
+                    //command.Parameters.AddWithValue("@LifeTime", "12");
+                    //command.Parameters.AddWithValue("@MaxMass", 12);
+                    //command.Parameters.AddWithValue("@HighestRank", 1);
+                    //command.Parameters.AddWithValue("@Kills", 12);
+                    //command.Parameters.AddWithValue("@ListOfKills", "Your Dad");
+                    //command.Parameters.AddWithValue("@TimeOfDeath", 120);
+                    //command.Parameters.AddWithValue("@UID", 8008);
                 }
+                else
+                {
+                    command.CommandText = "UPDATE `cs3500_tannerw`.`Player_Info` SET `LifeTime`=@LifeTime, `MaxMass`=@MaxMass, `HighestRank`=@HighestRank, `Kills`=@Kills, `ListOfKills`=@ListOfKills, `TimeOfDeath`=@TimeOfDeath WHERE `UID`=@UID;";
+                    command.Prepare();
+
+                    command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
+                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                    command.Parameters.AddWithValue("@HighestRank", 1);
+                    command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
+                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilled.ToString());
+                    command.Parameters.AddWithValue("@TimeOfDeath", Client.TimeDied.ToString());
+                    command.Parameters.AddWithValue("@UID", Client.UID);
+
+                }
+
+                command.ExecuteNonQuery();
+
 
 
 
@@ -359,11 +490,7 @@ namespace Server
                         float OldMass = Clients[SQLServerCube.Name].Mass;
                         if (OldMass < SQLServerCube.Mass)
                             Clients[SQLServerCube.Name].Mass = SQLServerCube.Mass;
-
                     }
-
-
-
 
                     //Check if any of the client cubes collide with food
                     foreach (Cube FCube in GameWorld.FoodCubes.Values)
@@ -373,8 +500,8 @@ namespace Server
                         {
                             if (FCube.Virus)
                             {
-                                string virus = VirusSplit(CubeItem);
-                                UpdatedCubes.Add(virus);
+                                //string virus = VirusSplit(CubeItem);
+                                //UpdatedCubes.Add(virus);
                                 //ToDelete.Add(FCube);
                             }
 
@@ -457,19 +584,22 @@ namespace Server
                             GameWorld.FoodCubes.Remove(item.uid);
 
                         string CubeName = item.Name;
-                        // Delete Players that have been merged
-                        ClientState CurrentClient = Clients[CubeName];
-
-                        if (CurrentClient != null && CurrentClient.UIDS.Contains(item.uid))
+                        if (CubeName != "")
                         {
-                            CurrentClient.UIDS.Remove(item.uid);
+                            // Delete Players that have been merged
+                            ClientState CurrentClient = Clients[CubeName];
 
-                            if (CurrentClient.UIDS.Count < 1)
+                            if (CurrentClient != null && CurrentClient.UIDS.Contains(item.uid))
                             {
-                                CurrentClient.TimeDied = stopwatch.ElapsedMilliseconds;
-                                CurrentClient.Socket.Close();
-                                SendToDataBase(CurrentClient);
-                                Clients.Remove(CurrentClient.Name);
+                                CurrentClient.UIDS.Remove(item.uid);
+
+                                if (CurrentClient.UIDS.Count < 1)
+                                {
+                                    CurrentClient.TimeDied = stopwatch.ElapsedMilliseconds;
+                                    CurrentClient.Socket.Close();
+                                    SendToDataBase(CurrentClient);
+                                    //Clients.Remove(CurrentClient.Name);
+                                }
                             }
                         }
                     }
@@ -493,6 +623,7 @@ namespace Server
             public long TimeSpawned;
             public long TimeDied;
             public float Mass;
+            public string UID;
 
             public ClientState(Socket _socket, string _name, HashSet<string> uid, int team)
             {
@@ -501,6 +632,7 @@ namespace Server
                 UIDS = uid;
                 TeamID = team;
                 timer = 0;
+                PlayersKilled = new HashSet<string>();
             }
 
             public int GetLifeTime()

@@ -74,7 +74,7 @@ namespace Network_Controller
                 // We connected now notify!
                 State.ServerCallback(State);
 
-                
+
 
 
             }
@@ -99,12 +99,12 @@ namespace Network_Controller
                     byte[] byteData = Encoding.UTF8.GetBytes(data);
 
                     // Begin sending the data to the remote device.
-                    client.BeginSend(byteData, 0, byteData.Length, 0,
-                        new AsyncCallback(SendCallback), client);
+                    client.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), client);
                 }
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
-
+                
             }
         }
 
@@ -124,7 +124,7 @@ namespace Network_Controller
                 {
                     // Complete sending the data to the remote device.
                     int bytesSent = client.EndSend(ar);
-                    
+
                 }
 
 
@@ -134,6 +134,7 @@ namespace Network_Controller
                 Debug.WriteLine(e.ToString());
             }
         }
+
 
         /// <summary>
         /// Receiving data
@@ -278,5 +279,90 @@ namespace Network_Controller
             }
         }
 
+
+        public static void HTTPClientLoop(Action<StateObject> CallBack)
+        {
+            // Connect to server
+            IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+            IPAddress ipAddress = ipHostInfo.AddressList[0];
+            IPEndPoint clientep = new IPEndPoint(IPAddress.Any, 11100);
+
+            Socket ServerConnect;
+
+            // Create socket to connect
+            ServerConnect = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            try
+            {
+                Console.WriteLine("HTTP Socket has started!");
+
+                // Create "handshake"
+                ServerConnect.Bind(clientep);
+                ServerConnect.Listen(10);
+
+
+                // Creat new state object, and start callback           
+                StateObject State = new StateObject();
+                State.workSocket = ServerConnect;
+                State.ServerCallback = CallBack;
+
+                // Start connection
+                ServerConnect.BeginAccept(Accept_a_New_Client, State);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Server_Awaiting_Client_Loop ERROR: .\n" + e.Message);
+            }
+
+        }
+
+        /// <summary>
+        /// Sends information
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="data"></param>
+        public static void HTTPSend(StateObject State, String data)
+        {
+            try
+            {
+
+                // Convert the string data to byte data using ASCII encoding.
+                byte[] byteData = Encoding.UTF8.GetBytes(data);
+
+                // Begin sending the data to the remote device.
+                State.workSocket.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(HTTPSendCallBack), State);
+
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Callback called while sending
+        /// </summary>
+        /// <param name="ar"></param>
+        private static void HTTPSendCallBack(IAsyncResult ar)
+        {
+
+
+
+            // Retrieve the socket from the state object.
+            StateObject client = (StateObject)ar.AsyncState;
+
+
+            // Complete sending the data to the remote device.
+            int bytesSent = client.workSocket.EndSend(ar);
+            Console.WriteLine("Sent" + bytesSent);
+            client.ServerCallback(client);
+
+
+
+
+
+
+
+        }
     }
 }
