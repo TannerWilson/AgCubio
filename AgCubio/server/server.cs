@@ -334,23 +334,119 @@ namespace Server
             switch (Route)
             {
                 case "/":
+                    // Generate base page
                     StringBuilder sb = new StringBuilder();
                     sb.Append(ReadHTML("top.html"));
                     //Gen Middle here
                     sb.Append(ReadHTML("bottom.html"));
                     HTTPReturn(State, sb.ToString());
                     break;
+
                 case "/highscores":
+                    // Fetch top socres
+                    String PlayerScores = GetScores();
+
+                    // Generate Score page
                     sb = new StringBuilder();
                     sb.Append(ReadHTML("top.html"));
                     //Gen Middle here
+                    sb.Append(PlayerScores);
                     sb.Append(ReadHTML("bottom.html"));
                     HTTPReturn(State, sb.ToString());
                     break;
 
+                case "/players":
+                    // Fetch players
+                    String Players = GetPlayers();
+
+                    // Generate player page
+                    sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append(Players);
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
             }
+        }
 
+        /// <summary>
+        /// Gets the top five scores from the database
+        /// </summary>
+        /// <returns></returns>
+        public static string GetScores()
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                // Open a connection to tour database
+                conn.Open();
 
+                // Select all from the score table and sort
+                MySqlCommand ExistCommand = conn.CreateCommand();
+                ExistCommand.CommandText = "SELECT * FROM Score_Table ORDER BY Mass DESC;";
+
+                // Read top 5 entries
+                int count = 0;
+                string Scores = "";
+                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Scores += reader["Name"].ToString() + ", " + reader["Mass"].ToString() + ", " + reader["UID"].ToString() + "\n";
+                        count++;
+                        if (count > 4)
+                            break;
+                    }
+                }
+                return Scores;
+            }
+        }
+
+        /// <summary>
+        /// Returns a string of player strings
+        /// </summary>
+        /// <returns></returns>
+        public static string GetPlayers()
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                // Open a connection to tour database
+                conn.Open();
+
+                // Select all from the score table and sort
+                MySqlCommand ExistCommand = conn.CreateCommand();
+                ExistCommand.CommandText = "SELECT * FROM Player_Info;";
+
+                // Read top 5 entries
+
+                StringBuilder Players = new StringBuilder();
+                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Players.Append(reader["Name"].ToString() + ", " + reader["MaxMass"].ToString() + ", " + reader["UID"].ToString()
+                            + reader["LifeTime"].ToString() + ", " + reader["Kills"].ToString() + ", " + reader["ListOfKills"].ToString() + ", "
+                            + reader["TimeOfDeath"].ToString() + "\n");
+                    }
+                }
+                return Players.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Create the HTML table for high scores
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string GenerateHighScoreHTMLTable(string data)
+        {
+            StringBuilder HTML = new StringBuilder();
+            HTML.Append("<table style=\"width:50 % \">");
+            HTML.Append("<tr><td>Name</td><td>Mass</td><td>UID</td></tr>");
+            String[] DataString = data.Split('\n');
+            return HTML.ToString();
         }
 
         /// <summary>
@@ -385,6 +481,51 @@ namespace Server
             return File.ReadAllText(Path);
         }
 
+        static void SendHighScoreToDataBase(ClientState Client)
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+
+                bool DoesExist = false;
+                // Open a connection
+                conn.Open();
+
+                MySqlCommand ExistCommand = conn.CreateCommand();
+
+                ExistCommand.CommandText = "select 1 from Score_Table where uid = " + Client.UID + ";";
+
+                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
+                {
+                    if (reader.HasRows == true)
+                        DoesExist = true;
+                }
+
+
+                // Create a command
+                MySqlCommand command = conn.CreateCommand();
+                if (!DoesExist)
+                {
+                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Score_Table` (`Name`, `Mass`, `UID`) VALUES (@Name, @MaxMass, @UID);";
+                    command.Prepare();
+
+                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                    command.Parameters.AddWithValue("@UID", Client.UID);
+                    command.Parameters.AddWithValue("@Name", Client.Name);
+                }
+                else
+                {
+                    command.CommandText = "UPDATE `cs3500_tannerw`.`Score_Table` SET `Name`=@Name, `Mass`=@MaxMass WHERE `UID`=@UID;";
+                    command.Prepare();
+
+                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                    command.Parameters.AddWithValue("@Name", Client.Name);
+                    command.Parameters.AddWithValue("@UID", Client.UID);
+                }
+
+                command.ExecuteNonQuery();
+            }
+        }
         /// <summary>
         /// Record player information to the SQL database
         /// </summary>
@@ -401,7 +542,7 @@ namespace Server
 
                 MySqlCommand ExistCommand = conn.CreateCommand();
 
-                ExistCommand.CommandText = "select 1 from Player_Info where uid = "+ Client.UID+";";
+                ExistCommand.CommandText = "select 1 from Player_Info where uid = " + Client.UID + ";";
 
                 using (MySqlDataReader reader = ExistCommand.ExecuteReader())
                 {
@@ -421,11 +562,12 @@ namespace Server
                     command.Parameters.AddWithValue("@MaxMass", Client.Mass);
                     command.Parameters.AddWithValue("@HighestRank", 1);
                     command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
-                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilled.ToString());
-                    command.Parameters.AddWithValue("@TimeOfDeath", Client.TimeDied.ToString());
+                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilledDataString());
+                    command.Parameters.AddWithValue("@TimeOfDeath", Client.GetDeathTime());
                     command.Parameters.AddWithValue("@UID", Client.UID);
                     command.Parameters.AddWithValue("@Name", Client.Name);
 
+                    //For Debuging
                     //command.Parameters.AddWithValue("@LifeTime", "12");
                     //command.Parameters.AddWithValue("@MaxMass", 12);
                     //command.Parameters.AddWithValue("@HighestRank", 1);
@@ -443,19 +585,18 @@ namespace Server
                     command.Parameters.AddWithValue("@MaxMass", Client.Mass);
                     command.Parameters.AddWithValue("@HighestRank", 1);
                     command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
-                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilled.ToString());
-                    command.Parameters.AddWithValue("@TimeOfDeath", Client.TimeDied.ToString());
+                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilledDataString());
+                    command.Parameters.AddWithValue("@TimeOfDeath", Client.GetDeathTime());
                     command.Parameters.AddWithValue("@UID", Client.UID);
 
                 }
 
                 command.ExecuteNonQuery();
-
-
-
-
             }
         }
+
+
+
 
         /// <summary>
         /// Updates all aspects of the world.
@@ -598,6 +739,7 @@ namespace Server
                                     CurrentClient.TimeDied = stopwatch.ElapsedMilliseconds;
                                     CurrentClient.Socket.Close();
                                     SendToDataBase(CurrentClient);
+                                    SendHighScoreToDataBase(CurrentClient);
                                     //Clients.Remove(CurrentClient.Name);
                                 }
                             }
@@ -637,7 +779,31 @@ namespace Server
 
             public int GetLifeTime()
             {
-                return Convert.ToInt32((TimeSpawned / 1000) - (TimeDied / 1000));
+                return Convert.ToInt32((TimeDied / 1000) - (TimeSpawned / 1000));
+            }
+
+            public int GetDeathTime()
+            {
+                return Convert.ToInt32(TimeDied / 1000);
+            }
+
+
+
+            public string PlayersKilledDataString()
+            {
+                StringBuilder PlayersKilledStringBuilder = new StringBuilder();
+                if (PlayersKilled.Count > 0)
+                {
+
+                    foreach (string Item in PlayersKilled)
+                    {
+                        PlayersKilledStringBuilder.Append(Item + " ");
+                    }
+                }
+                else
+                    return "NONE";
+
+                return PlayersKilledStringBuilder.ToString();
             }
         }
     }
