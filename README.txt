@@ -1,7 +1,4 @@
-# Team_Hiphopopotamus
-Tanner Wilson and Joey Despain partner Repo
-
-Author: Tanner Wilson
+﻿Author: Tanner Wilson
 Author: Joseph Despain
 
 ***RUNNING NOTE*** 
@@ -10,6 +7,26 @@ Author: Joseph Despain
 	then run both by navigating to them in the file explorer and running their application files. This should fix the issue.
 
 	For the best and most reliable results, only run from the application files intead of from VS. 
+
+	**********************************
+			DATABASE PS9
+	**********************************
+
+	*NOTES*
+
+	- There are some default constant values in the Database to allow for testing of functionality without having to play the game.
+
+	- We do not have a primary key in our Player_Info Table. This is due to the fact that the There is the possibility of UID's and 
+	player names to be dupilacted. We chose not to have the GameID as the primary due to the fact that each time that we start the server 
+	is created the GameID is started at 0. So the GameID's will be unique if the server is never stopped and restarted.
+
+	- Also, we changed the sever code so that viruses no longer work and are treated as normal food.
+
+
+
+	**********************************************
+				SERVER PROJECT PS8
+	**********************************************
 
 *****THINGS NOT WORKING*****
 
