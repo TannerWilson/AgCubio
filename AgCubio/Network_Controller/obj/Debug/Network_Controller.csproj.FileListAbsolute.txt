@@ -21,3 +21,10 @@ C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debu
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Newtonsoft.Json.xml
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.dll
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Network_Controller.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Network_Controller.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Newtonsoft.Json.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\bin\Debug\Newtonsoft.Json.xml
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.csprojResolveAssemblyReference.cache
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Network_Controller\obj\Debug\Network_Controller.pdb

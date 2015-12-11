@@ -22,3 +22,10 @@ C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.Json.xml
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.dll
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Model.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Model.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.Json.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\bin\Debug\Newtonsoft.Json.xml
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.csprojResolveAssemblyReference.cache
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Model\obj\Debug\Model.pdb

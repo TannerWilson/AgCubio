@@ -47,6 +47,11 @@ namespace Server
         /// </summary>
         public static int ServerStartTime;
 
+        /// <summary>
+        /// Total number of games played in the sever
+        /// </summary>
+        public static int CurrentGame;
+
         public static Stopwatch stopwatch = new Stopwatch();
 
         static void Main(string[] args)
@@ -72,6 +77,7 @@ namespace Server
             timer.Enabled = true;
 
             Clients = new Dictionary<string, ClientState>();
+            CurrentGame = 0;
 
             // Create initial food
             lock (GameWorld)
@@ -109,18 +115,24 @@ namespace Server
             {
                 Console.WriteLine("Player " + PlayerName + " has entered the game!");
                 PlayerJsonString = GameWorld.MakePlayer(PlayerName);
+
             }
             lock (Clients)
             {
+                // Create player cube
                 Cube PlayerCube = JsonConvert.DeserializeObject<Cube>(PlayerJsonString);
 
                 HashSet<string> NewPlayerHash = new HashSet<string>();
                 NewPlayerHash.Add(PlayerCube.uid);
 
+                // Create and add new player client representation
                 ClientState NewClient = new ClientState(State.workSocket, PlayerName, NewPlayerHash, PlayerCube.team_id);
                 Clients.Add(PlayerName, NewClient);
+
+                // Record the information needed for database purposes
                 NewClient.UID = PlayerCube.uid;
                 NewClient.TimeSpawned = stopwatch.ElapsedMilliseconds;
+                NewClient.Game = CurrentGame++;
             }
 
             lock (State)
@@ -135,7 +147,6 @@ namespace Server
             // Send food data
             SendInitFoodData(State);
             SendPlayersData(State);
-
 
 
             Network.GetData(State);
@@ -331,6 +342,29 @@ namespace Server
         static void HTTPRoute(string Route, StateObject State)
         {
             Console.WriteLine(Route);
+            string ArgumentName = null;
+            string Argument = null;
+
+            if(Route.Contains("?"))
+            {
+                try
+                {
+                    string[] SplitString = Route.Split('?');
+
+                    Route = SplitString[0];
+
+                    string[] ArgumentSplit = SplitString[1].Split('=');
+
+                    ArgumentName = ArgumentSplit[0];
+
+                    Argument = ArgumentSplit[1];
+                }
+                catch(Exception e)
+                {
+                    
+                }
+
+            }
             switch (Route)
             {
                 case "/":
@@ -349,13 +383,12 @@ namespace Server
                     // Generate Score page
                     sb = new StringBuilder();
                     sb.Append(ReadHTML("top.html"));
-                    //Gen Middle here
-                    sb.Append(PlayerScores);
+                    sb.Append(GenerateHighScoreHTMLTable(PlayerScores));
                     sb.Append(ReadHTML("bottom.html"));
                     HTTPReturn(State, sb.ToString());
                     break;
 
-                case "/players":
+                case "/scores":
                     // Fetch players
                     String Players = GetPlayers();
 
@@ -363,10 +396,97 @@ namespace Server
                     sb = new StringBuilder();
                     sb.Append(ReadHTML("top.html"));
                     //Gen Middle here
-                    sb.Append(Players);
+                    sb.Append(GeneratePlayerHTMLTable(Players));
                     sb.Append(ReadHTML("bottom.html"));
                     HTTPReturn(State, sb.ToString());
                     break;
+                case "/games":
+                    string PlayerInfo = GetPlayerData(Argument);
+                    // Generate player page
+                    sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append(GeneratePlayerHTMLTable(PlayerInfo));
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
+                case "/eaten":
+                    string GameInfo = GetGameIDPlayers(Argument);
+                    // Generate player page
+                    sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append(GeneratePlayerHTMLTable(GameInfo));
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
+                default:
+                    // Generate player page
+                    sb = new StringBuilder();
+                    sb.Append(ReadHTML("top.html"));
+                    //Gen Middle here
+                    sb.Append("404!");
+                    sb.Append(ReadHTML("bottom.html"));
+                    HTTPReturn(State, sb.ToString());
+                    break;
+            }
+        }
+
+        public static string GetPlayerData(string PlayerName)
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                // Open a connection to tour database
+                conn.Open();
+
+                // Select all from the score table and sort
+                MySqlCommand Command = conn.CreateCommand();
+                Command.CommandText = "SELECT * FROM Player_Info WHERE Name = @PlayerName;";
+                Command.Prepare();
+
+                Command.Parameters.AddWithValue("@PlayerName", PlayerName);
+
+                StringBuilder Players = new StringBuilder();
+                using (MySqlDataReader reader = Command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Players.Append(reader["Name"].ToString() + "," + reader["MaxMass"].ToString() + "," + reader["UID"].ToString() + ","
+                            + reader["LifeTime"].ToString() + "," + reader["Kills"].ToString() + ", " + reader["ListOfKills"].ToString() + ","
+                            + reader["TimeOfDeath"].ToString() + "," + reader["GameID"] + "\n");
+                    }
+                }
+                return Players.ToString();
+            }
+        }
+
+        public static string GetGameIDPlayers(string GameId)
+        {
+            const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                // Open a connection to tour database
+                conn.Open();
+
+                // Select all from the score table and sort
+                MySqlCommand Command = conn.CreateCommand();
+                Command.CommandText = "SELECT * FROM Player_Info WHERE GameID = @GameID;";
+                Command.Prepare();
+
+                Command.Parameters.AddWithValue("@GameID", GameId);
+
+                StringBuilder Players = new StringBuilder();
+                using (MySqlDataReader reader = Command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Players.Append(reader["Name"].ToString() + "," + reader["MaxMass"].ToString() + "," + reader["UID"].ToString() + ","
+                            + reader["LifeTime"].ToString() + "," + reader["Kills"].ToString() + ", " + reader["ListOfKills"].ToString() + ","
+                            + reader["TimeOfDeath"].ToString() + "," + reader["GameID"] + "\n");
+                    }
+                }
+                return Players.ToString();
             }
         }
 
@@ -393,7 +513,7 @@ namespace Server
                 {
                     while (reader.Read())
                     {
-                        Scores += reader["Name"].ToString() + ", " + reader["Mass"].ToString() + ", " + reader["UID"].ToString() + "\n";
+                        Scores += reader["Name"].ToString() + "," + reader["Mass"].ToString() + "," + reader["UID"].ToString() + "\n";
                         count++;
                         if (count > 4)
                             break;
@@ -426,9 +546,9 @@ namespace Server
                 {
                     while (reader.Read())
                     {
-                        Players.Append(reader["Name"].ToString() + ", " + reader["MaxMass"].ToString() + ", " + reader["UID"].ToString()
-                            + reader["LifeTime"].ToString() + ", " + reader["Kills"].ToString() + ", " + reader["ListOfKills"].ToString() + ", "
-                            + reader["TimeOfDeath"].ToString() + "\n");
+                        Players.Append(reader["Name"].ToString() + "," + reader["MaxMass"].ToString() + "," + reader["UID"].ToString() + ","
+                            + reader["LifeTime"].ToString() + "," + reader["Kills"].ToString() + ", " + reader["ListOfKills"].ToString() + ","
+                            + reader["TimeOfDeath"].ToString()+ ","+ reader["GameID"] + "\n");
                     }
                 }
                 return Players.ToString();
@@ -443,11 +563,60 @@ namespace Server
         public static string GenerateHighScoreHTMLTable(string data)
         {
             StringBuilder HTML = new StringBuilder();
-            HTML.Append("<table style=\"width:50 % \">");
+            HTML.Append("<table border=\"1\" style=\"width:50%\">");
             HTML.Append("<tr><td>Name</td><td>Mass</td><td>UID</td></tr>");
-            String[] DataString = data.Split('\n');
+
+            string[] DataString = data.Split('\n');
+            // Create  a row for each player in the data string
+            foreach (string PlayerDataString in DataString)
+            {
+                if (PlayerDataString != "")  // Ensure valid string
+                {
+                    string[] DataItems = PlayerDataString.Split(',');
+                    // Generate row with player data
+                    HTML.Append("<tr><td><a href =\"/games?player=" + DataItems[0] + "\">" + DataItems[0] + "</a></td><td>" + DataItems[1] + "</td><td>" + DataItems[2] + "</td></tr>");
+                }
+            }
+            HTML.Append("</table>");
             return HTML.ToString();
         }
+
+
+        /// <summary>
+        /// Create the HTML table for high scores
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public static string GeneratePlayerHTMLTable(string data)
+        {
+            StringBuilder HTML = new StringBuilder();
+            // Set up table start and top row
+            HTML.Append("<table border=\"1\" style=\"width:50%\">");
+            HTML.Append("<tr><td>Name</td><td>MaxMass</td><td>UID</td><td>LifeTime</td><td>Kills</td><td>ListOfKills</td><td>TimeOfDeath</td><td>GameID</td></tr>");
+
+            string[] DataString = data.Split('\n');
+            // Create  a row for each player in the data string
+            foreach (string PlayerDataString in DataString)
+            {
+                if (PlayerDataString != "") // Ensure valid string
+                {
+                    string[] DataItems = PlayerDataString.Split(',');
+
+                    // Geterate String from list of kills
+                    string[] PlayerKills = DataItems[5].Split('$');
+                    string kills = "";
+                    foreach (string player in PlayerKills)
+                    {
+                        kills += player + ", ";
+                    }
+                    // Generate row with player data
+                    HTML.Append("<tr><td><a href =\"/games?player=" + DataItems[0] + "\">" + DataItems[0] + "</a></td><td>" + DataItems[1] + "</td><td>" + DataItems[2] + "</td><td>" + DataItems[3] + "</td><td>" + DataItems[4] + "</td><td>" + kills + "</td><td>" + DataItems[6] + "</td><td>"+ DataItems[7]+ "</td></tr>");
+                }
+            }
+            HTML.Append("</table>");
+            return HTML.ToString();
+        }
+
 
         /// <summary>
         /// Send the HTML to the web page
@@ -486,42 +655,19 @@ namespace Server
             const string connectionString = "server=atr.eng.utah.edu;database=cs3500_tannerw;uid=cs3500_tannerw;password=PSWRD";
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
-
-                bool DoesExist = false;
                 // Open a connection
                 conn.Open();
 
-                MySqlCommand ExistCommand = conn.CreateCommand();
-
-                ExistCommand.CommandText = "select 1 from Score_Table where uid = " + Client.UID + ";";
-
-                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
-                {
-                    if (reader.HasRows == true)
-                        DoesExist = true;
-                }
-
-
                 // Create a command
                 MySqlCommand command = conn.CreateCommand();
-                if (!DoesExist)
-                {
-                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Score_Table` (`Name`, `Mass`, `UID`) VALUES (@Name, @MaxMass, @UID);";
-                    command.Prepare();
 
-                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
-                    command.Parameters.AddWithValue("@UID", Client.UID);
-                    command.Parameters.AddWithValue("@Name", Client.Name);
-                }
-                else
-                {
-                    command.CommandText = "UPDATE `cs3500_tannerw`.`Score_Table` SET `Name`=@Name, `Mass`=@MaxMass WHERE `UID`=@UID;";
-                    command.Prepare();
+                command.CommandText = "INSERT INTO `cs3500_tannerw`.`Score_Table` (`Name`, `Mass`, `UID`) VALUES (@Name, @MaxMass, @UID);";
+                command.Prepare();
 
-                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
-                    command.Parameters.AddWithValue("@Name", Client.Name);
-                    command.Parameters.AddWithValue("@UID", Client.UID);
-                }
+                command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                command.Parameters.AddWithValue("@UID", Client.UID);
+                command.Parameters.AddWithValue("@Name", Client.Name);
+
 
                 command.ExecuteNonQuery();
             }
@@ -536,60 +682,38 @@ namespace Server
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
 
-                bool DoesExist = false;
+
                 // Open a connection
                 conn.Open();
-
-                MySqlCommand ExistCommand = conn.CreateCommand();
-
-                ExistCommand.CommandText = "select 1 from Player_Info where uid = " + Client.UID + ";";
-
-                using (MySqlDataReader reader = ExistCommand.ExecuteReader())
-                {
-                    if (reader.HasRows == true)
-                        DoesExist = true;
-                }
 
 
                 // Create a command
                 MySqlCommand command = conn.CreateCommand();
-                if (!DoesExist)
-                {
-                    command.CommandText = "INSERT INTO `cs3500_tannerw`.`Player_Info` (`LifeTime`, `MaxMass`, `HighestRank`, `Kills`, `ListOfKills`, `TimeOfDeath`, `UID`, `Name`) VALUES(@LifeTime, @MaxMass, @HighestRank, @Kills, @ListOfKills, @TimeOfDeath, @UID,@Name);";
-                    command.Prepare();
 
-                    command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
-                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
-                    command.Parameters.AddWithValue("@HighestRank", 1);
-                    command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
-                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilledDataString());
-                    command.Parameters.AddWithValue("@TimeOfDeath", Client.GetDeathTime());
-                    command.Parameters.AddWithValue("@UID", Client.UID);
-                    command.Parameters.AddWithValue("@Name", Client.Name);
+                command.CommandText = "INSERT INTO `cs3500_tannerw`.`Player_Info` (`LifeTime`, `MaxMass`, `HighestRank`, `Kills`, `ListOfKills`, `TimeOfDeath`, `UID`, `Name`,`GameID`) VALUES(@LifeTime, @MaxMass, @HighestRank, @Kills, @ListOfKills, @TimeOfDeath, @UID,@Name,@GameID);";
+                command.Prepare();
 
-                    //For Debuging
-                    //command.Parameters.AddWithValue("@LifeTime", "12");
-                    //command.Parameters.AddWithValue("@MaxMass", 12);
-                    //command.Parameters.AddWithValue("@HighestRank", 1);
-                    //command.Parameters.AddWithValue("@Kills", 12);
-                    //command.Parameters.AddWithValue("@ListOfKills", "Your Dad");
-                    //command.Parameters.AddWithValue("@TimeOfDeath", 120);
-                    //command.Parameters.AddWithValue("@UID", 8008);
-                }
-                else
-                {
-                    command.CommandText = "UPDATE `cs3500_tannerw`.`Player_Info` SET `LifeTime`=@LifeTime, `MaxMass`=@MaxMass, `HighestRank`=@HighestRank, `Kills`=@Kills, `ListOfKills`=@ListOfKills, `TimeOfDeath`=@TimeOfDeath WHERE `UID`=@UID;";
-                    command.Prepare();
+                command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
+                command.Parameters.AddWithValue("@MaxMass", Client.Mass);
+                command.Parameters.AddWithValue("@HighestRank", 1);
+                command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
+                command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilledDataString());
+                command.Parameters.AddWithValue("@TimeOfDeath", Client.GetDeathTime());
+                command.Parameters.AddWithValue("@UID", Client.UID);
+                command.Parameters.AddWithValue("@Name", Client.Name);
+                command.Parameters.AddWithValue("@GameID", Client.Game);
 
-                    command.Parameters.AddWithValue("@LifeTime", Client.GetLifeTime().ToString());
-                    command.Parameters.AddWithValue("@MaxMass", Client.Mass);
-                    command.Parameters.AddWithValue("@HighestRank", 1);
-                    command.Parameters.AddWithValue("@Kills", Client.kills.ToString());
-                    command.Parameters.AddWithValue("@ListOfKills", Client.PlayersKilledDataString());
-                    command.Parameters.AddWithValue("@TimeOfDeath", Client.GetDeathTime());
-                    command.Parameters.AddWithValue("@UID", Client.UID);
+                //For Debuging
+                //command.Parameters.AddWithValue("@LifeTime", "12");
+                //command.Parameters.AddWithValue("@MaxMass", 12);
+                //command.Parameters.AddWithValue("@HighestRank", 1);
+                //command.Parameters.AddWithValue("@Kills", 12);
+                //command.Parameters.AddWithValue("@ListOfKills", "Your Dad");
+                //command.Parameters.AddWithValue("@TimeOfDeath", 120);
+                //command.Parameters.AddWithValue("@UID", 8008);
+                //command.Parameters.AddWithValue("@Name", "Test");
+                //command.Parameters.AddWithValue("@GameID", 8008);
 
-                }
 
                 command.ExecuteNonQuery();
             }
@@ -755,17 +879,65 @@ namespace Server
         /// </summary>
         protected class ClientState
         {
+            /// <summary>
+            /// The timer used for merging
+            /// </summary>
             public int timer;
+
+            /// <summary>
+            /// Socket used to send information to clients
+            /// </summary>
             public Socket Socket;
+
+            /// <summary>
+            /// Players name
+            /// </summary>
             public string Name;
+
+            /// <summary>
+            /// UID's of the stings belonging to this client
+            /// </summary>
             public HashSet<string> UIDS;
+
+            /// <summary>
+            /// Team that the cubes belong to 
+            /// </summary>
             public int TeamID;
+
+            /// <summary>
+            /// Number of kills this client has scored
+            /// </summary>
             public int kills;
+
+            /// <summary>
+            /// List of players killed/eaten
+            /// </summary>
             public HashSet<string> PlayersKilled;
+
+            /// <summary>
+            /// Time the client connected
+            /// </summary>
             public long TimeSpawned;
+
+            /// <summary>
+            /// Time the player disconnected/died
+            /// </summary>
             public long TimeDied;
+
+            /// <summary>
+            /// Client player's mass
+            /// </summary>
             public float Mass;
+
+            /// <summary>
+            /// UID of the first cube to connect from this client
+            /// </summary>
             public string UID;
+
+            /// <summary>
+            /// This players game number
+            /// </summary>
+            public int Game;
 
             public ClientState(Socket _socket, string _name, HashSet<string> uid, int team)
             {
@@ -797,7 +969,7 @@ namespace Server
 
                     foreach (string Item in PlayersKilled)
                     {
-                        PlayersKilledStringBuilder.Append(Item + " ");
+                        PlayersKilledStringBuilder.Append(Item + "$");
                     }
                 }
                 else

@@ -25,3 +25,11 @@ C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtons
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtonsoft.Json.xml
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.exe
 C:\Users\josephd\Desktop\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.exe.config
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.exe
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Resources.pdb
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtonsoft.Json.dll
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\bin\Debug\Newtonsoft.Json.xml
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.csprojResolveAssemblyReference.cache
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.exe
+C:\Users\josephd\Desktop\THEEND\Team_Hiphopopotamus\AgCubio\Resources\obj\Debug\Resources.pdb
